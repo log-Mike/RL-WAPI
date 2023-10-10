@@ -1,6 +1,3 @@
-# need (some of) these later
-# from flask import Flask, redirect, url_for, render_template, request
-
 from flask import Flask, render_template
 from flask_mysqldb import MySQL
 
@@ -13,33 +10,27 @@ app.config['MYSQL_DB'] = 'essiga27'
 
 db = MySQL(app)
 
-@app.route('/123abc')
-def tryDB():
+@app.route('/avail')
+def print_resources():
     try:
         cursor = db.connection.cursor()
-
+        
+        # sample query
         cursor.execute("select * from network")
-
-        # 2d array
-        data = cursor.fetchall()
-
+        # get array of tuples
+        table = cursor.fetchall()
+        
         cursor.close()
-
-        # returned string is put into an empty <body>
-        # return in html table instead of newlines
-        # so it's pretty :-)
-        result = "<table>"
-        for row in data:
-            result += "<tr>"
-            for value in row:
-                result += "<td>" + str(value) + "</td>"
-            result += "</tr>"
-        result += "</table>"
-        return result
-
+        
+        # render the new template (html file)
+        # pass in the table as data to q_results
+        # make the table look pretty in q_results 
+        # file with js, css
+        return render_template('q_results.html', data=table)
     except Exception as e:
-        error_message = "An error occurred: " + str(e)
-        return error_message
+        return render_template('q_error.html', 
+            msg="An error occurred: " + str(e))
+
 
 
 @app.route('/')
@@ -52,6 +43,7 @@ def start():
 # apparently waitress has a command line interface too,
 # not sure if that can be used for our CLI as well
 if __name__=='__main__':
-    # almost certain we will need this later
-    with app.app_context():
-        app.run(debug=True)
+    # might need this later when updating db
+    # with app.app_context():
+    
+    app.run(debug=True)

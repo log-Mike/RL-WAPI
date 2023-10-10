@@ -5,9 +5,14 @@ Made during/for Rowan University Software Engineering Fall 2023 class. Developed
 
 # Team makeup:
 Russell Bamberger - Product Owner 
+
 Gina Poitras - Scrum Master
 
+
 Victoria Bostick - Developer
+
 Alexander Essig - Developer
+
 Shauna Hurley - Developer
+
 Michael Loughrin - Developer

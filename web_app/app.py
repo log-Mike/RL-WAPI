@@ -27,7 +27,7 @@ def print_resources():
         # make the table look pretty in q_results 
         # file with js, css
         return render_template('q_results.html', data=table)
-    except Exception as e:
+    except Exception as i:
         return render_template('q_error.html', 
             msg="An error occurred: " + str(e))
 

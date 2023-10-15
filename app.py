@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_mysqldb import MySQL
 
 app=Flask(__name__)
@@ -10,15 +10,26 @@ app.config['MYSQL_DB'] = 'essiga27'
 
 db = MySQL(app)
 
+@app.route('/allocate', methods=['POST'])
+def process_form():
+    # can now use in backend like 
+    # validating
+    var1 = request.form.get('ui1')
+    var2 = request.form.get('ui2')
+    
+    return "You entered " + str(var1) + " & " + str(var2)
+    
 @app.route('/avail')
 def print_resources():
     try:
+        table_to_query = "user"
         cursor = db.connection.cursor()
-        
-        # sample query
-        cursor.execute("select * from network")
-        # get array of tuples
+
+        cursor.execute("select * from " + table_to_query)
         table = cursor.fetchall()
+
+        cursor.execute("show columns from " + table_to_query)
+        cols = cursor.fetchall()
         
         cursor.close()
         
@@ -26,7 +37,7 @@ def print_resources():
         # pass in the table as data to q_results
         # make the table look pretty in q_results 
         # file with js, css
-        return render_template('avail.html', data=table)
+        return render_template('avail.html', data=table, columns=cols)
     except Exception as e:
         return render_template('avail_error.html', 
             msg="An error occurred: " + str(e))

@@ -10,9 +10,9 @@
     <table>
        <thead>
             <tr>
-                <th>Key</th>
-		<th>Name</th>				
-                <th>User</th>
+				{% for col in columns %}
+                <th>{{ col[0] }}</th>				
+				{% endfor %}
             </tr>
         </thead>
         <tbody>

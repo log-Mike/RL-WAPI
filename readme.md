@@ -16,3 +16,23 @@ Alexander Essig - Developer
 Shauna Hurley - Developer
 
 Michael Loughrin - Developer
+
+# To run the current version
+- Clone the git repo
+- Navigate into the directory
+`cd CG-RLWAPI`
+- Make a virtual environment using `venv` like such:
+`python -m venv virt`
+
+- Activate the virtual environment using activate located in `venv/Scripts` like such:
+`call virt\Scripts\activate.bat`
+or
+`source virt/bin/activate`
+
+- Install the required packages into the virtual environment:
+`pip install -r requirements.txt`
+
+- Run the app
+`flask run`
+
+You should now be able to access the web app at http://localhost:5000, typically http://127.0.0.1:5000

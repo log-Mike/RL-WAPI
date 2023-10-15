@@ -30,7 +30,7 @@ Michael Loughrin - Developer
 
 	`call virt\Scripts\activate.bat`
 
-		or
+	or
 
 	`source virt/bin/activate`
 

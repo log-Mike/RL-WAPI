@@ -26,7 +26,7 @@ Michael Loughrin - Developer
 
 	`python -m venv virt`
 
-- Activate the virtual environment using activate located in `venv/Scripts` like such:
+- Activate the virtual environment using activate located in `virt/Scripts` like such:
 
 	`call virt\Scripts\activate.bat`
 

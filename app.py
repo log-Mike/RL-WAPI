@@ -14,10 +14,10 @@ db = MySQL(app)
 def process_form():
     # can now use in backend like 
     # validating
-    var1 = request.form.get('ui1')
-    var2 = request.form.get('ui2')
+    user = request.form.get('username')
+    password = request.form.get('pswrd')
     
-    return "You entered " + str(var1) + " & " + str(var2)
+    return "You entered " + user + " & " + password
     
 @app.route('/avail')
 def print_resources():

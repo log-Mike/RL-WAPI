@@ -66,7 +66,7 @@ def print_resources():
         # file with js, css
         return render_template('avail.html', data=table, columns=cols)
     except Exception as e:
-        return render_template('avail_error.html', 
+        return render_template('error.html', 
             msg="An error occurred: " + str(e))
 
 

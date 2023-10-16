@@ -32,7 +32,7 @@ Michael Loughrin - Developer
 
 	or
 
-	`source virt/bin/activate`
+	`source virt/Scripts/activate`
 
 - Install the required packages into the virtual environment:
 

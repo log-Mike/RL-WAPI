@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title>Select Values</title>
+</head>
+<body>
+   <h1>Select Values</h1>
+   <form method="POST" action="/allocate/f">
+       <label for="column1">Select Value from Column 1:</label>
+       <select name="user" id="column1">
+           {% for value in column1_values %}
+           <option value="{{ value[0] }}">{{ value[0] }}</option>
+           {% endfor %}
+       </select>
+        <br>
+       <label for="column2">Select Value from Column 2:</label>
+       <select name="network" id="column2">
+           {% for value in column2_values %}
+           <option value="{{ value[0] }}">{{ value[0] }}</option>
+           {% endfor %}
+       </select>
+        <br>
+       <input type="submit" value="Submit">
+   </form>
+</body>
+</html>

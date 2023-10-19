@@ -10,7 +10,6 @@ app.config['MYSQL_DB'] = 'essiga27'
 
 db = MySQL(app)
 
-
 @app.route('/allocate/f', methods=['POST'])
 def allocate_f():
     user = request.form.get('user')
@@ -18,7 +17,6 @@ def allocate_f():
     
     cur = db.connection.cursor()    
     # update db
-       
        
     cur.close()
     
@@ -36,7 +34,6 @@ def select_page():
     
     cur.close()
     return render_template('select.html', column1_values=column1_values, column2_values=column2_values)
-
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -68,8 +65,6 @@ def print_resources():
     except Exception as e:
         return render_template('error.html', 
             msg="An error occurred: " + str(e))
-
-
 
 @app.route('/')
 def start():

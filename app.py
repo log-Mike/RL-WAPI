@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, g
 from flask_mysqldb import MySQL
 
 app=Flask(__name__)
@@ -10,61 +10,75 @@ app.config['MYSQL_DB'] = 'essiga27'
 
 db = MySQL(app)
 
+@app.teardown_appcontext
+def close_mysql(exception):
+    # if connection isn't closed
+    # on app being closed, close it
+    if getattr(g, '_mysql_db', None) is not None:
+        db.close()
+    
 @app.route('/allocate/f', methods=['POST'])
-def allocate_f():
+def select_done():
     user = request.form.get('user')
     network = request.form.get('network')
     
-    cur = db.connection.cursor()    
-    # update db
-       
-    cur.close()
+    try:
+        cur = db.connection.cursor()
+        
+        # start transaction
+        cur.execute("update network set user = \'" + user 
+        + "\' where name = \'" + network + "\'")
+        
+        # commit transaction
+        db.connection.commit()
+        
+        return render_template('finish.html', user=user, network=network,
+        msg=("NOT" if cur.rowcount == 0 else "IS")+" SUCCESSFUL")
     
-    return user + " assigned to " + network
-
+    except Exception as e:
+        return render_template('error.html', 
+                msg="An error occurred: " + str(e))
+    finally:
+        cur.close()
+    
 @app.route('/allocate')
 def select_page():
-    cur = db.connection.cursor()
-    
-    cur.execute("select username from user")
-    column1_values = cur.fetchall()
-    
-    cur.execute("select name from network")
-    column2_values = cur.fetchall()
-    
-    cur.close()
-    return render_template('select.html', column1_values=column1_values, column2_values=column2_values)
+    try:
+        # for showing table
+        cur = db.connection.cursor()
+        
+        cur.execute("show columns from network")
+        cols = cur.fetchall()[1:]
+        
+        cur.execute("select name, user from network order by 1")
+        table = cur.fetchall()
 
-@app.route('/login', methods=['POST'])
+
+        # for dropdowns
+        cur.execute("select username from user order by 1")
+        avail_users = cur.fetchall()
+        
+        cur.execute("select name from network order by 1")
+        avail_networks = cur.fetchall()
+        
+        return render_template('select.html', column1_values=avail_users, 
+        column2_values=avail_networks, data=table, columns=cols)
+
+    except Exception as e:
+        return render_template('error.html', 
+                msg="An error occurred: " + str(e)) 
+    finally:
+        cur.close()
+
+@app.route('/home', methods=['POST'])
 def login():
     # can now use in backend like 
     # validating
     user = request.form.get('username')
     password = request.form.get('pswrd')
     
-    return "You entered " + user + " & " + password
-    
-@app.route('/avail')
-def print_resources():
-    try:
-        table_to_query = "network"
-        cursor = db.connection.cursor()
-
-        cursor.execute("select * from " + table_to_query)
-        table = cursor.fetchall()
-
-        cursor.execute("show columns from " + table_to_query)
-        cols = cursor.fetchall()
-        cursor.close()
-        
-        # render the new template (html file)
-        # pass in the table as data to q_results
-        # make the table look pretty in q_results 
-        # file with js, css
-        return render_template('avail.html', data=table, columns=cols)
-    except Exception as e:
-        return render_template('error.html', 
-            msg="An error occurred: " + str(e))
+    return render_template("home.html")
+  
 
 @app.route('/')
 def start():
@@ -72,11 +86,9 @@ def start():
     
 
 # for development run it on local in debug mode
+
 # waitress could be a could option for later
-# apparently waitress has a command line interface too,
+# waitress has a command line interface too,
 # not sure if that can be used for our CLI as well
 if __name__=='__main__':
-    # might need this later when updating db
-    # with app.app_context():
-    
     app.run(debug=True)

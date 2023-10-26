@@ -3,18 +3,23 @@
     <head>
         <meta charset="utf-8">
         <title>Login</title>
+        <!-- Surely one is incorrect, ../static vs static -->
         <link rel="stylesheet" href="../static/style.css">
         <script src="static/main.js"></script>
+        
+        
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous">
         </script>
     </head>
     <body class="centered">
         <div class="centercontainer">
+        <!-- do we need to ask about what image to use?
             <img src="path/to/image.png" alt="Lockheed Martin Logo" >
+            -->
             <br>
             <br>
-            <form method="POST" action="/login">
+            <form method="POST" action="/home">
                 <label for="username">Username:</label>
                 <input type="text" placeholder="Enter username" name="username" required>
                 <br>
@@ -25,12 +30,6 @@
                 <br>
                 <button type="submit">Login</button>
             </form>
-        </div>
-        <!-- <a href="avail">
-            <input id="view" type="button" value="View resources">
-        </a>
-        <a href="allocate">
-            <input id="allocate" type="button" value="Allocate resources">
-        </a> -->		
+        </div>	
     </body>
 </html>

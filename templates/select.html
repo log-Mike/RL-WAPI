@@ -2,25 +2,101 @@
 <html>
 <head>
    <title>Select Values</title>
+   <style>
+      /* Define a two-column layout using CSS flexbox */
+      body {
+         display: flex;
+      }
+      .table-container {
+         flex: 1;
+         padding: 10px;
+         background-color: #f2f2f2;
+      }
+      .form-container {
+         flex: 1;
+         padding: 10px;
+         background-color: #e0e0e0;
+         border-radius: 5px;
+      }
+      table {
+         width: 100%;
+         border-collapse: collapse;
+         background-color: #fff;
+      }
+      table th, table td {
+         border: 1px solid #ccc;
+         padding: 8px;
+         text-align: left;
+      }
+      table th {
+         background-color: #333;
+         color: #fff;
+      }
+      table tr:nth-child(even) {
+         background-color: #f2f2f2;
+      }
+      form {
+         margin-top: 20px;
+      }
+      h1 {
+         font-size: 24px;
+         color: #333;
+      }
+      label, select {
+         display: block;
+         margin-bottom: 10px;
+      }
+      select, input[type="submit"] {
+         width: 100%;
+         padding: 8px;
+         border: 1px solid #ccc;
+         border-radius: 3px;
+      }
+   </style>
 </head>
 <body>
-   <h1>Select Values</h1>
-   <form method="POST" action="/allocate/f">
-       <label for="column1">Select Value from Column 1:</label>
-       <select name="user" id="column1">
-           {% for value in column1_values %}
-           <option value="{{ value[0] }}">{{ value[0] }}</option>
-           {% endfor %}
-       </select>
-        <br>
-       <label for="column2">Select Value from Column 2:</label>
-       <select name="network" id="column2">
-           {% for value in column2_values %}
-           <option value="{{ value[0] }}">{{ value[0] }}</option>
-           {% endfor %}
-       </select>
-        <br>
-       <input type="submit" value="Submit">
-   </form>
+   <!-- Left column for the table -->
+   <div class="table-container">
+      <table>
+         <thead>
+            <tr>
+               {% for col in columns %}
+               <th>{{ col[0] }}</th>				
+               {% endfor %}
+            </tr>
+         </thead>
+         <tbody>
+            {% for row in data %}
+            <tr>
+               <!-- Loop through row values to populate table cells -->
+               {% for value in row %}
+               <td>{{ value }}</td>
+               {% endfor %}
+            </tr>
+            {% endfor %}
+         </tbody>
+      </table>
+   </div>
+
+   <!-- Right column for the form selection -->
+   <div class="form-container">
+      <h1>Select Values</h1>
+      <form method="POST" action="/allocate/f">
+         <label for="column1">Assign User</label>
+         <select name="user" id="column1">
+            {% for value in column1_values %}
+            <option value="{{ value[0] }}">{{ value[0] }}</option>
+            {% endfor %}
+         </select>
+         <label for="column2">To Network</label>
+         <select name="network" id="column2">
+            {% for value in column2_values %}
+            <option value="{{ value[0] }}">{{ value[0] }}</option>
+            {% endfor %}
+         </select>
+         <br>
+         <input type="submit" value="Submit">
+      </form>
+   </div>
 </body>
 </html>

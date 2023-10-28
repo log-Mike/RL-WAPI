@@ -1,12 +1,29 @@
 from flask import Flask, render_template, request, g
 from flask_mysqldb import MySQL
 
+import config
+
 app=Flask(__name__)
+
+app.config['MYSQL_HOST'] = config.MYSQL_HOST
+app.config['MYSQL_USER'] = config.MYSQL_USER
+app.config['MYSQL_PASSWORD'] = config.MYSQL_PASSWORD
+app.config['MYSQL_DB'] = config.MYSQL_DB
+
+'''
+
+config_data = {}
+with open('config.txt') as f:
+    for line in f:
+        key, value = line.strip().split('=')
+        config_data[key] = value
 
 app.config['MYSQL_HOST'] = 'elvis.rowan.edu'
 app.config['MYSQL_USER'] = 'essiga27'
 app.config['MYSQL_PASSWORD'] = '1Happygnome!'
 app.config['MYSQL_DB'] = 'essiga27'
+
+'''
 
 db = MySQL(app)
 
@@ -26,18 +43,18 @@ def select_done():
         cur = db.connection.cursor()
         
         # start transaction
-        cur.execute("update network set user = \'" + user 
-        + "\' where name = \'" + network + "\'")
+        cur.execute("update network set user = '" + user 
+        + "' where name = '" + network + "'")
         
         # commit transaction
         db.connection.commit()
         
         return render_template('finish.html', user=user, network=network,
-        msg=("NOT" if cur.rowcount == 0 else "IS")+" SUCCESSFUL")
+        msg=('NOT' if cur.rowcount == 0 else 'IS')+' SUCCESSFUL')
     
     except Exception as e:
         return render_template('error.html', 
-                msg="An error occurred: " + str(e))
+                msg='An error occurred: ' + str(e))
     finally:
         cur.close()
     
@@ -55,7 +72,7 @@ def select_page():
 
 
         # for dropdowns
-        cur.execute("select username from user order by 1")
+        cur.execute("select username from userInfo order by 1")
         avail_users = cur.fetchall()
         
         cur.execute("select name from network order by 1")
@@ -66,7 +83,7 @@ def select_page():
 
     except Exception as e:
         return render_template('error.html', 
-                msg="An error occurred: " + str(e)) 
+                msg='An error occurred: ' + str(e)) 
     finally:
         cur.close()
 
@@ -77,7 +94,7 @@ def login():
     user = request.form.get('username')
     password = request.form.get('pswrd')
     
-    return render_template("home.html")
+    return render_template('home.html')
   
 
 @app.route('/')

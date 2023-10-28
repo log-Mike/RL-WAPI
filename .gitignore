@@ -3,3 +3,4 @@
 *env/
 *pycache*
 *.DS_Store*
+*config.py*

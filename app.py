@@ -10,21 +10,6 @@ app.config['MYSQL_USER'] = config.MYSQL_USER
 app.config['MYSQL_PASSWORD'] = config.MYSQL_PASSWORD
 app.config['MYSQL_DB'] = config.MYSQL_DB
 
-'''
-
-config_data = {}
-with open('config.txt') as f:
-    for line in f:
-        key, value = line.strip().split('=')
-        config_data[key] = value
-
-app.config['MYSQL_HOST'] = 'elvis.rowan.edu'
-app.config['MYSQL_USER'] = 'essiga27'
-app.config['MYSQL_PASSWORD'] = '1Happygnome!'
-app.config['MYSQL_DB'] = 'essiga27'
-
-'''
-
 db = MySQL(app)
 
 @app.teardown_appcontext

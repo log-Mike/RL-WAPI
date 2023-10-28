@@ -22,21 +22,28 @@ Michael Loughrin - Developer
 - Navigate into the directory
 
 	`cd CG-RLWAPI`
+    
 - Make a virtual environment using `venv` like such:
 
 	`python -m venv virt`
 
-- Activate the virtual environment using activate located in `virt/Scripts` like such:
+- Activate the virtual environment using activate located in `virt\Scripts` or `virt/bin` like such:
 
-	`call virt\Scripts\activate.bat`
+	`virt\Scripts\activate`
 
-	or
+	`virt\Scripts\Activate.ps1`
+    
+    or
 
-	`source virt/Scripts/activate`
+	`source virt/bin/activate`
 
 - Install the required packages into the virtual environment:
 
 	`pip install -r requirements.txt`
+    
+- Set up the configuration file
+
+    `config.py`
 
 - Run the app
 

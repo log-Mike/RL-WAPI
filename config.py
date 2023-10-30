@@ -1,4 +1,4 @@
-MYSQL_HOST = 'your_db_host'
-MYSQL_USER = 'your_db_user'
-MYSQL_PASSWORD = 'your_db_password'
-MYSQL_DB = 'your_db_name'
+MYSQL_HOST = 'elvis.rowan.edu'
+MYSQL_USER = 'essiga27'
+MYSQL_PASSWORD = '1Happygnome!'
+MYSQL_DB = 'essiga27'

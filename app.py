@@ -97,16 +97,18 @@ def login():
     # can now use in backend like 
     # validating
     user = request.form.get('username')
-    print(user)
     password = request.form.get('pswrd')
 
-    # cur = db.connection.cursor()
-    # cur.execute("select access_permission from userInfo where username=:user")
-    # cur.bindParam()
-    # cols = cur.fetchone()
-    # print(cols)
+    cur = db.connection.cursor()
+    cur.execute("select access_permission from userInfo where username=%s", (user,))
+    permission = cur.fetchone()[0]
 
-
+    # if permission == "admin":
+    #     template = 'select.html'
+    #     select_page_admin()
+    # else: 
+    #     template = 'view.html'
+    #     select_page_user()
     
     return render_template('path.html')
   

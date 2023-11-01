@@ -44,7 +44,7 @@ def select_done():
         cur.close()
     
 @app.route('/allocate')
-def select_page():
+def select_page_admin():
     try:
         # for showing table
         cur = db.connection.cursor()
@@ -72,14 +72,43 @@ def select_page():
     finally:
         cur.close()
 
+@app.route('/view')
+def select_page_user():
+    try:
+        # for showing table
+        cur = db.connection.cursor()
+        
+        cur.execute("show columns from network")
+        cols = cur.fetchall()[1:]
+        
+        cur.execute("select name, user from network order by 1")
+        table = cur.fetchall()
+
+        return render_template('view.html', data=table, columns=cols)
+
+    except Exception as e:
+        return render_template('error.html', 
+                msg='An error occurred: ' + str(e)) 
+    finally:
+        cur.close()
+
 @app.route('/home', methods=['POST'])
 def login():
     # can now use in backend like 
     # validating
     user = request.form.get('username')
+    print(user)
     password = request.form.get('pswrd')
+
+    # cur = db.connection.cursor()
+    # cur.execute("select access_permission from userInfo where username=:user")
+    # cur.bindParam()
+    # cols = cur.fetchone()
+    # print(cols)
+
+
     
-    return render_template('home.html')
+    return render_template('path.html')
   
 
 @app.route('/')

@@ -98,5 +98,49 @@
          <input type="submit" value="Submit">
       </form>
    </div>
+   
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const userSelect = document.getElementById("column1");
+    const networkSelect = document.getElementById("column2");
+    const submitButton = document.querySelector("input[type='submit']");
+    const tableBody = document.querySelector("table tbody");
+
+    submitButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        const user = userSelect.value;
+        const network = networkSelect.value;
+
+        // Make an AJAX POST request to update the record
+        fetch("/allocate/f", {
+            method: "POST",
+            body: new URLSearchParams({ user, network }),
+            headers: { "Content-Type": "application/x-www-form-urlencoded" }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    // Locate the row with the corresponding network name
+                    const networkName = data.networkName;
+                    const rows = tableBody.querySelectorAll("tr");
+
+                    for (const row of rows) {
+                        const cells = row.querySelectorAll("td");
+                        if (cells[0].textContent === networkName) {
+                            // Update the specific cell(s) in the row
+                            cells[1].textContent = data.updatedUser;
+                            break; 
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error(error));
+    });
+});
+
+
+</script>   
 </body>
 </html>

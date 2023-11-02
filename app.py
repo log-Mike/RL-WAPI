@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, redirect, g
+from flask import Flask, render_template, request, url_for, redirect, g, jsonify
 from flask_mysqldb import MySQL
 
 import config
@@ -18,7 +18,7 @@ def close_mysql(exception):
     # on app being closed, close it
     if getattr(g, '_mysql_db', None) is not None:
         db.close()
-    
+   
 @app.route('/allocate/f', methods=['POST'])
 def select_done():
     user = request.form.get('user')
@@ -34,12 +34,14 @@ def select_done():
         # commit transaction
         db.connection.commit()
         
-        return render_template('finish.html', user=user, network=network,
-        msg=('NOT' if cur.rowcount == 0 else 'IS')+' SUCCESSFUL')
-    
+        return jsonify({
+            "networkName": network,
+            "updatedUser": user,
+        })
     except Exception as e:
-        return render_template('error.html', 
-                msg='An error occurred: ' + str(e))
+        return jsonify({
+            "error": "An error occurred: " + str(e)
+        })
     finally:
         cur.close()
     

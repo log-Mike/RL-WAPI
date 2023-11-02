@@ -1,6 +1,6 @@
-*venv/
-*virt/
-*env/
+**/venv
+**/virt
+**/env
 *pycache*
-*.DS_Store*
-*config.py*
+**/.DS_Store
+**/config.py

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, g
+from flask import Flask, render_template, request, url_for, redirect, g
 from flask_mysqldb import MySQL
 
 import config
@@ -99,20 +99,35 @@ def login():
     user = request.form.get('username')
     password = request.form.get('pswrd')
 
-    cur = db.connection.cursor()
-    cur.execute("select access_permission from userInfo where username=%s", (user,))
-    permission = cur.fetchone()[0]
-
-    # if permission == "admin":
-    #     template = 'select.html'
-    #     select_page_admin()
-    # else: 
-    #     template = 'view.html'
-    #     select_page_user()
+    '''
+    validate password through ldap
     
-    return render_template('path.html')
-  
+    
+    
+    
+    
+    
+    
+    '''
 
+
+    try:
+        cur = db.connection.cursor()
+        cur.execute("select access_permission from userInfo where username=%s", (user,))
+        permission = cur.fetchone()[0]
+    except Exception as e:
+        return render_template('error.html', 
+                msg='An error occurred: ' + str(e)) 
+    finally:
+        cur.close()
+    
+    if permission == "admin":
+        result_route = "select_page_admin"
+    else: 
+        result_route = "select_page_user"
+        
+    return redirect(url_for(result_route))
+  
 @app.route('/')
 def start():
     return render_template('index.html')

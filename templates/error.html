@@ -1,10 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Results</title>
+    <meta charset="utf-8">
+    <title>Error</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .error-container {
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
-    <h1>:(</h1>
+    <div class="error-container">
+        <h1>:(</h1>
         {{ msg }}
+    </div>
 </body>
 </html>

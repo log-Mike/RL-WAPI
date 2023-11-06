@@ -20,24 +20,30 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (data.error) {
                     alert(data.error);
                 } else {
-                    // Binary search to find the correct row
-                    // Asure in app.py that the table
-                    // is ordered by network:name
-                    let left = 0;
-                    let right = tableBody.rows.length - 1;
+                    if (data.nop==='1'){
+                        alert("Nothing done as " + data.user +
+                        " is already assigned to " + data.network);
+                    }
+                    else{    
+                        // Binary search to find the correct row
+                        // Assure in app.py that the table
+                        // is ordered by network:name
+                        let left = 0;
+                        let right = tableBody.rows.length - 1;
 
-                    while (left <= right) {
-                        const mid = Math.floor((left + right) / 2);
-                        const networkName = tableBody.rows[mid].cells[0].textContent;
+                        while (left <= right) {
+                            const mid = Math.floor((left + right) / 2);
+                            const network = tableBody.rows[mid].cells[0].textContent;
 
-                        if (networkName === data.networkName) {
-                            // make the update
-                            tableBody.rows[mid].cells[1].textContent = data.updatedUser;
-                            break;
-                        } else if (networkName < data.networkName) {
-                            left = mid + 1;
-                        } else {
-                            right = mid - 1;
+                            if (network === data.network) {
+                                // make the update
+                                tableBody.rows[mid].cells[1].textContent = data.user;
+                                break;
+                            } else if (network < data.network) {
+                                left = mid + 1;
+                            } else {
+                                right = mid - 1;
+                            }
                         }
                     }
                 }

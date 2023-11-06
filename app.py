@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, redirect, g, jsonify
+from flask import Flask, g, jsonify, redirect, render_template, request, url_for
 from flask_mysqldb import MySQL
 
 import config
@@ -32,12 +32,21 @@ def select_done():
         cur.execute("update network set user = '" + user 
         + "' where name = '" + network + "'")
         
-        # commit transaction
-        db.connection.commit()
+        if cur.rowcount == 1:            
+            # commit transaction
+            db.connection.commit()
+            nop = '0'
+        elif cur.rowcount == 0:
+            nop = '1'
+        else:
+            return jsonify({
+            "error": "More than one row affected"
+            })
         
         return jsonify({
-            "networkName": network,
-            "updatedUser": user,
+            "nop" : nop,
+            "network": network,
+            "user": user
         })
     except Exception as e:
         return jsonify({

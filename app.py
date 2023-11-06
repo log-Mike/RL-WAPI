@@ -31,26 +31,19 @@ def select_done():
         # start transaction
         cur.execute("update network set user = '" + user 
         + "' where name = '" + network + "'")
-        
-        if cur.rowcount == 1:            
-            # commit transaction
-            db.connection.commit()
-            nop = '0'
-        elif cur.rowcount == 0:
-            nop = '1'
-        else:
-            return jsonify({
-            "error": "More than one row affected"
-            })
+            
+        num_updated = cur.rowcount
+
+        db.connection.commit()
         
         return jsonify({
-            "nop" : nop,
-            "network": network,
-            "user": user
+            'num_updated' : num_updated,
+            'network': network,
+            'user': user
         })
     except Exception as e:
         return jsonify({
-            "error": "An error occurred: " + str(e)
+            'error': 'An error occurred: ' + str(e)
         })
     finally:
         cur.close()
@@ -61,18 +54,18 @@ def select_page_admin():
         # for showing table
         cur = db.connection.cursor()
         
-        cur.execute("show columns from network")
+        cur.execute('show columns from network')
         cols = cur.fetchall()[1:]
         
-        cur.execute("select name, user from network order by 1")
+        cur.execute('select name, user from network order by 1')
         table = cur.fetchall()
 
 
         # for dropdowns
-        cur.execute("select username from userInfo order by 1")
+        cur.execute('select username from userInfo order by 1')
         avail_users = cur.fetchall()
         
-        cur.execute("select name from network order by 1")
+        cur.execute('select name from network order by 1')
         avail_networks = cur.fetchall()
         
         return render_template('select.html', column1_values=avail_users, 
@@ -90,10 +83,10 @@ def select_page_user():
         # for showing table
         cur = db.connection.cursor()
         
-        cur.execute("show columns from network")
+        cur.execute('show columns from network')
         cols = cur.fetchall()[1:]
         
-        cur.execute("select name, user from network order by 1")
+        cur.execute('select name, user from network order by 1')
         table = cur.fetchall()
 
         return render_template('view.html', data=table, columns=cols)
@@ -125,7 +118,7 @@ def login():
 
     try:
         cur = db.connection.cursor()
-        cur.execute("select access_permission from userInfo where username=%s", (user,))
+        cur.execute('select access_permission from userInfo where username=%s', (user,))
         permission = cur.fetchone()[0]
     except Exception as e:
         return render_template('error.html', 
@@ -133,10 +126,10 @@ def login():
     finally:
         cur.close()
     
-    if permission == "admin":
-        result_route = "select_page_admin"
+    if permission == 'admin':
+        result_route = 'select_page_admin'
     else: 
-        result_route = "select_page_user"
+        result_route = 'select_page_user'
         
     return redirect(url_for(result_route))
   

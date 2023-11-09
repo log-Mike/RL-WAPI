@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
     submitButton.addEventListener("click", function (event) {
         event.preventDefault();
         const user = userSelect.value;
-        const network = networkSelect.value;
+        const network = networkSelect.value.toLowerCase();
 
         // Make an AJAX POST request to update the record
         fetch("/allocate/f", {
@@ -20,16 +20,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (data.error) {
                     alert(data.error);
                 } else {    
-                    // Binary search to find the correct row
-                    // Assure in app.py that the table
-                    // is ordered by network:name
+                    /* 
+                        Binary search to find the correct row
+                        Case insensitive because SQL default is
+                        Assure in app.py that the table
+                        is ordered by network:name
                     
-
-
-                    // something wrong with one of these ????
-                    let left = 0;
-                    let right = tableBody.rows.length;
-                    /*
                         workaround with no web socket yet
                         
                         if we have to update the html table but the
@@ -40,11 +36,15 @@ document.addEventListener("DOMContentLoaded", function () {
                         and query updated 0, it means the update
                         didn't happen at all, ie already assigned
                     */
+                    
+                    let left = 0;
+                    let right = tableBody.rows.length - 1;
+                    
                     let updated = false;
                     
                     while (left <= right) {
                         const mid = Math.floor((left + right) / 2);
-                        const network = tableBody.rows[mid].cells[0].textContent;
+                        const network = tableBody.rows[mid].cells[0].textContent.toLowerCase();
                         if (network === data.network) {
                             // make the update
                             if (tableBody.rows[mid].cells[1].textContent != data.user){

@@ -28,9 +28,16 @@ def select_done():
     try:
         cur = db.connection.cursor()
         
+        if user == 'del_user':
+            set_to = 'NULL'
+            update_to = "User not assigned"
+        else:
+            set_to = '"' + user + '"'
+            update_to = user
+        
         # start transaction
-        cur.execute("update network set user = '" + user 
-        + "' where name = '" + network + "'")
+        cur.execute('update network set user = ' + set_to 
+        + ' where name = "' + network + '"')
             
         num_updated = cur.rowcount
 
@@ -39,7 +46,7 @@ def select_done():
         return jsonify({
             'num_updated' : num_updated,
             'network': network,
-            'user': user
+            'user': update_to
         })
     except Exception as e:
         return jsonify({
@@ -57,9 +64,13 @@ def select_page_admin():
         cur.execute('show columns from network')
         cols = cur.fetchall()[1:]
         
-        cur.execute('select name, user from network order by 1')
+        cur.execute('select name, coalesce(user, "User not assigned") as user' + 
+        ' from network order by 1')
+        
         table = cur.fetchall()
-
+        print(table)
+        
+        
 
         # for dropdowns
         cur.execute('select username from userInfo order by 1')
@@ -97,7 +108,7 @@ def select_page_user():
     finally:
         cur.close()
 
-@app.route('/home', methods=['POST'])
+@app.route('/process-login-request', methods=['POST'])
 def login():
     # can now use in backend like 
     # validating

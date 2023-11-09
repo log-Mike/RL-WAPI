@@ -35,6 +35,7 @@
       <form method="POST" action="/allocate/f">
          <label for="column1">Assign User</label>
          <select name="user" id="column1">
+            <option value = "del_user"> Remove assigned user </option>
             {% for value in column1_values %}
             <option value="{{ value[0] }}">{{ value[0] }}</option>
             {% endfor %}

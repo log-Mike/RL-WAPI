@@ -20,6 +20,8 @@ app.config['MYSQL_PASSWORD'] = config.MYSQL_PASSWORD
 app.config['MYSQL_DB'] = config.MYSQL_DB
 app.config['MYSQL_PORT'] = int(config.MYSQL_PORT)
 
+app.config['API_KEY'] = config.API_KEY
+
 db = MySQL(app)
 
 @app.teardown_appcontext
@@ -28,7 +30,6 @@ def close_mysql(exception):
     # on app being closed, close it
     if getattr(g, '_mysql_db', None) is not None:
         db.close()
-
 
 def get_table_data_and_columns(cur):
     try:
@@ -44,39 +45,10 @@ def get_table_data_and_columns(cur):
     except Exception as e:
         raise e
 
-@app.route('/process-login-request', methods=['POST'])
-def login():
-    # can now use in backend like 
-    # validating
-    user = request.form.get('username')
-    password = request.form.get('pswrd')
+def authenticate_api(given_key):
+    return given_key == app.config['API_KEY']
 
-    '''
-    validate password through ldap
-    
-    
-    
-    
-    
-    
-    
-    '''
-    
-    try:
-        cur = db.connection.cursor()
-        cur.execute('select access_permission from userInfo where username=%s', (user,))
-        permission = cur.fetchone()[0]
-    except Exception as e:
-        return render_template('error.html', 
-                msg='An error occurred: ' + str(e)) 
-    finally:
-        cur.close()
-        
-    return redirect(url_for('select_page_admin' if 
-    permission == 'admin' else 'select_page_user'))
-  
-
-   
+ 
 @app.route('/process-table-update', methods=['POST'])
 def select_done():
     user = request.form.get('user')
@@ -112,12 +84,85 @@ def select_done():
     finally:
         cur.close()
     
+@app.route('/api/<string:action>')
+def handle_request(action):
+    api_key = request.headers.get('API-KEY')
+
+    if not authenticate_api(api_key):
+        return str(-1)
+        
+    network = request.args.get('network')
+    
+    try:
+        cur = db.connection.cursor()
+        if action == 'lock':
+            # start transaction
+            cur.execute('update network set user = NULL'
+            + ' where name = "' + network + '"')
+                
+            num_updated = cur.rowcount
+
+            db.connection.commit() 
+            return 'Locking network'
+
+        elif action == 'checklock':
+            # Handle checklock action
+            return f'Checking lock for network: {network}, Additional parameters: {additional_parameters}'
+
+        elif action == 'unlock':
+            # Handle unlock action
+            return f'Unlocking network: {network}, Additional parameters: {additional_parameters}'
+        else:
+            return "this does nothing!"
+            
+        num_updated = cur.rowcount
+
+        db.connection.commit()        
+        
+        return str(num_updated)
+    except Exception as e:
+        return str(-1)
+    finally:
+        cur.close()
+
 
 @app.route('/')
 def start():
     return render_template('index.html')
     
+@app.route('/process-login-request', methods=['POST'])
+def login():
+    # can now use in backend like 
+    # validating
+    user = request.form.get('username')
+    password = request.form.get('pswrd')
+
+    '''
+    validate password through ldap
     
+    
+    
+    
+    
+    
+    
+    '''
+    
+    try:
+        cur = db.connection.cursor()
+        cur.execute('select access_permission from userInfo where username=%s', (user,))
+        permission = cur.fetchone()[0]
+    except Exception as e:
+        return render_template('error.html', 
+                msg='An error occurred: ' + str(e)) 
+    finally:
+        cur.close()
+        
+    return redirect(url_for('select_page_admin' if 
+    permission == 'admin' else 'select_page_user'))
+  
+
+  
 @app.route('/allocate')
 def select_page_admin():
     try:

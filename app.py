@@ -20,7 +20,7 @@ def close_mysql(exception):
     if getattr(g, '_mysql_db', None) is not None:
         db.close()
    
-@app.route('/allocate/f', methods=['POST'])
+@app.route('/process-table-update', methods=['POST'])
 def select_done():
     user = request.form.get('user')
     network = request.form.get('network')
@@ -68,10 +68,7 @@ def select_page_admin():
         ' from network order by 1')
         
         table = cur.fetchall()
-        print(table)
         
-        
-
         # for dropdowns
         cur.execute('select username from userInfo order by 1')
         avail_users = cur.fetchall()
@@ -97,7 +94,8 @@ def select_page_user():
         cur.execute('show columns from network')
         cols = cur.fetchall()[1:]
         
-        cur.execute('select name, user from network order by 1')
+        cur.execute('select name, coalesce(user, "User not assigned") as user' + 
+        ' from network order by 1')
         table = cur.fetchall()
 
         return render_template('view.html', data=table, columns=cols)

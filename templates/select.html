@@ -31,16 +31,16 @@
 
    <!-- Right column for the form selection -->
    <div class="form-container">
-      <h1>Select Values</h1>
-      <form method="POST" action="/allocate/f">
-         <label for="column1">Assign User</label>
+      <h1>Assign or drop user from network</h1>
+      <form method="POST" action="/process-table-update">
+         <label for="column1">User</label>
          <select name="user" id="column1">
             <option value = "del_user"> Remove assigned user </option>
             {% for value in column1_values %}
             <option value="{{ value[0] }}">{{ value[0] }}</option>
             {% endfor %}
          </select>
-         <label for="column2">To Network</label>
+         <label for="column2">Network</label>
          <select name="network" id="column2">
             {% for value in column2_values %}
             <option value="{{ value[0] }}">{{ value[0] }}</option>

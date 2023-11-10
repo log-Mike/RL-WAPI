@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const network = networkSelect.value.toLowerCase();
 
         // Make an AJAX POST request to update the record
-        fetch("/allocate/f", {
+        fetch("/process-table-update", {
             method: "POST",
             body: new URLSearchParams({ user, network }),
             headers: { "Content-Type": "application/x-www-form-urlencoded" }

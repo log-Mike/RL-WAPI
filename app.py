@@ -204,12 +204,7 @@ def select_page_user():
 
     finally:
         cur.close()
-    
 
 # for development run it on local in debug mode
-
-# waitress could be a could option for later
-# waitress has a command line interface too,
-# not sure if that can be used for our CLI as well
 if __name__=='__main__':
     app.run(debug=True)

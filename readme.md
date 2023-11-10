@@ -42,10 +42,24 @@ Shauna Hurley - Developer
     
 - Set up the configuration file
 
-    `config.py`
+    	`config.py`
 
 - Run the app
 
 	`flask run`
 
-You should now be able to access the web app at http://localhost:5000, typically http://127.0.0.1:5000
+You should now be able to access the web app at http://localhost:5000, typicall defaulted to http://127.0.0.1:5000
+
+# To access the API through client shell
+
+- Set the API key
+
+	`$env:API_KEY = "api_key"
+
+    or
+
+	'export API_KEY='api_key'`
+
+- Execute the script
+	
+	`./client.sh lock network`

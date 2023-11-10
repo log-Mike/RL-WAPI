@@ -8,7 +8,7 @@ Michael Loughrin - Developer
 
 Russell Bamberger - Product Owner 
 
-Gina Poitras - Scrum Master
+Phoenix Poitras - Scrum Master
 
 Victoria Bostick - Developer
 

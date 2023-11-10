@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title>{% block title %}{% endblock %}</title>
+   <link rel="stylesheet" href="{{ url_for('static', filename='css/tables_pretty.css') }}">
+</head>
+<body>
+   <!-- Left column for the table -->
+   <div class="table-container">
+      <table>
+         <thead>
+            <tr>
+               {% for col in columns %}
+               <th>{{ col[0] }}</th>				
+               {% endfor %}
+            </tr>
+         </thead>
+         <tbody>
+            {% for row in data %}
+            <tr>
+               <!-- Loop through row values to populate table cells -->
+               {% for value in row %}
+               <td>{{ value }}</td>
+               {% endfor %}
+            </tr>
+            {% endfor %}
+         </tbody>
+      </table>
+   </div>
+   {% block additional_content %}{% endblock %}
+</body>
+</html>

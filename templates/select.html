@@ -1,41 +1,15 @@
-<!DOCTYPE html>
-<html>
-<head>
-   <title>Update assignments</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/tables_pretty.css') }}">
+{% extends 'base.html' %}
 
-</head>
-<body>
-   <!-- Left column for the table -->
-   <div class="table-container">
-      <table>
-         <thead>
-            <tr>
-               {% for col in columns %}
-               <th>{{ col[0] }}</th>				
-               {% endfor %}
-            </tr>
-         </thead>
-         <tbody>
-            {% for row in data %}
-            <tr>
-               <!-- Loop through row values to populate table cells -->
-               {% for value in row %}
-               <td>{{ value }}</td>
-               {% endfor %}
-            </tr>
-            {% endfor %}
-         </tbody>
-      </table>
-   </div>
+{% block title %}Update Assignments{% endblock %}
 
+{% block additional_content %}
    <!-- Right column for the form selection -->
    <div class="form-container">
       <h1>Assign or drop user from network</h1>
       <form method="POST" action="/process-table-update">
          <label for="column1">User</label>
          <select name="user" id="column1">
-            <option value = "del_user"> Remove assigned user </option>
+            <option value="del_user">Remove assigned user</option>
             {% for value in column1_values %}
             <option value="{{ value[0] }}">{{ value[0] }}</option>
             {% endfor %}
@@ -50,8 +24,5 @@
          <input type="submit" value="Submit">
       </form>
    </div>
-   
-<script src="{{ url_for('static', filename='js/update_table.js') }}"></script>
-  
-</body>
-</html>
+   <script src="{{ url_for('static', filename='js/update_table.js') }}"></script>
+{% endblock %}

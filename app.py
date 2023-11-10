@@ -1,7 +1,16 @@
 from flask import Flask, g, jsonify, redirect, render_template, request, url_for
 from flask_mysqldb import MySQL
 
-import config
+try:
+    import config
+except ImportError as e:
+    print('''Error with config file, should be a python (.py) file in format of:
+        MYSQL_HOST = "sql_db_host"
+        MYSQL_USER = "sql_db_user"
+        MYSQL_PASSWORD = "sql_db_pwd"
+        MYSQL_DB = "sql_db_name"
+        MYSQL_PORT = "sql_db_port"''')
+    raise SystemExit(e)
 
 app=Flask(__name__)
 
@@ -19,6 +28,54 @@ def close_mysql(exception):
     # on app being closed, close it
     if getattr(g, '_mysql_db', None) is not None:
         db.close()
+
+
+def get_table_data_and_columns(cur):
+    try:
+        # for showing table
+        cur.execute('show columns from network')
+        cols = cur.fetchall()[1:]
+
+        cur.execute('select name, coalesce(user, "User not assigned") as user from network order by 1')
+        table = cur.fetchall()
+
+        return table, cols
+
+    except Exception as e:
+        raise e
+
+@app.route('/process-login-request', methods=['POST'])
+def login():
+    # can now use in backend like 
+    # validating
+    user = request.form.get('username')
+    password = request.form.get('pswrd')
+
+    '''
+    validate password through ldap
+    
+    
+    
+    
+    
+    
+    
+    '''
+    
+    try:
+        cur = db.connection.cursor()
+        cur.execute('select access_permission from userInfo where username=%s', (user,))
+        permission = cur.fetchone()[0]
+    except Exception as e:
+        return render_template('error.html', 
+                msg='An error occurred: ' + str(e)) 
+    finally:
+        cur.close()
+        
+    return redirect(url_for('select_page_admin' if 
+    permission == 'admin' else 'select_page_user'))
+  
+
    
 @app.route('/process-table-update', methods=['POST'])
 def select_done():
@@ -55,20 +112,17 @@ def select_done():
     finally:
         cur.close()
     
+
+@app.route('/')
+def start():
+    return render_template('index.html')
+    
+    
 @app.route('/allocate')
 def select_page_admin():
     try:
-        # for showing table
         cur = db.connection.cursor()
-        
-        cur.execute('show columns from network')
-        cols = cur.fetchall()[1:]
-        
-        cur.execute('select name, coalesce(user, "User not assigned") as user' + 
-        ' from network order by 1')
-        
-        table = cur.fetchall()
-        
+
         # for dropdowns
         cur.execute('select username from userInfo order by 1')
         avail_users = cur.fetchall()
@@ -76,75 +130,35 @@ def select_page_admin():
         cur.execute('select name from network order by 1')
         avail_networks = cur.fetchall()
         
-        return render_template('select.html', column1_values=avail_users, 
-        column2_values=avail_networks, data=table, columns=cols)
+        table, cols = get_table_data_and_columns(cur)
+
+        return render_template('select.html', 
+        column1_values=avail_users, 
+        column2_values=avail_networks, 
+        data=table, 
+        columns=cols)
 
     except Exception as e:
         return render_template('error.html', 
-                msg='An error occurred: ' + str(e)) 
+        msg='An error occurred: ' + str(e))
+
     finally:
         cur.close()
 
 @app.route('/view')
 def select_page_user():
     try:
-        # for showing table
         cur = db.connection.cursor()
         
-        cur.execute('show columns from network')
-        cols = cur.fetchall()[1:]
-        
-        cur.execute('select name, coalesce(user, "User not assigned") as user' + 
-        ' from network order by 1')
-        table = cur.fetchall()
+        table, cols = get_table_data_and_columns(cur)
 
         return render_template('view.html', data=table, columns=cols)
 
     except Exception as e:
-        return render_template('error.html', 
-                msg='An error occurred: ' + str(e)) 
+        return render_template('error.html', msg='An error occurred: ' + str(e))
+
     finally:
         cur.close()
-
-@app.route('/process-login-request', methods=['POST'])
-def login():
-    # can now use in backend like 
-    # validating
-    user = request.form.get('username')
-    password = request.form.get('pswrd')
-
-    '''
-    validate password through ldap
-    
-    
-    
-    
-    
-    
-    
-    '''
-
-
-    try:
-        cur = db.connection.cursor()
-        cur.execute('select access_permission from userInfo where username=%s', (user,))
-        permission = cur.fetchone()[0]
-    except Exception as e:
-        return render_template('error.html', 
-                msg='An error occurred: ' + str(e)) 
-    finally:
-        cur.close()
-    
-    if permission == 'admin':
-        result_route = 'select_page_admin'
-    else: 
-        result_route = 'select_page_user'
-        
-    return redirect(url_for(result_route))
-  
-@app.route('/')
-def start():
-    return render_template('index.html')
     
 
 # for development run it on local in debug mode

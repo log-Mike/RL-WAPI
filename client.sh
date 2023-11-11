@@ -7,9 +7,11 @@ fi
 
 BASE_URL='http://127.0.0.1:5000'
 
-# if neither parameters are provided
+# base line: need two parameters, action & id
+# API is querying based on network:'name' 
+# and userInfo:username'
 if [ -z "$2" ]; then
-    echo "Usage: $0 lock/checklock/unlock network [additional_parameters]"
+    echo "Usage: $0 lock/checklock/unlock input"
     exit 2
 fi
 

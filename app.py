@@ -36,6 +36,7 @@ def get_table_data_and_columns(cur):
         # for showing table
         cur.execute('show columns from network')
         cols = cur.fetchall()[1:]
+        db.connection.commit()        
 
         cur.execute('select name, coalesce(user, "User not assigned") as user from network order by 1')
         table = cur.fetchall()
@@ -45,7 +46,7 @@ def get_table_data_and_columns(cur):
     except Exception as e:
         raise e
 
-def authenticate_api(given_key):
+def auth_key(given_key):
     return given_key == app.config['API_KEY']
 
  
@@ -84,44 +85,66 @@ def select_done():
     finally:
         cur.close()
     
+# change return values for bash client    
 @app.route('/api/<string:action>')
 def handle_request(action):
+    
+    print('hi')
     api_key = request.headers.get('API-KEY')
 
-    if not authenticate_api(api_key):
-        return str(-1)
-        
-    network = request.args.get('network')
-    
+    if not auth_key(api_key):
+        return 'bad api key'
+   
+    result = 'an error occured.'
+
     try:
+        input = request.args.get('input')
         cur = db.connection.cursor()
+        # set any free network to given user
+        # should this have some sort of distribution?
+        # should it be completely random ?
         if action == 'lock':
-            # start transaction
-            cur.execute('update network set user = NULL'
-            + ' where name = "' + network + '"')
-                
-            num_updated = cur.rowcount
-
-            db.connection.commit() 
-            return 'Locking network'
-
-        elif action == 'checklock':
-            # Handle checklock action
-            return f'Checking lock for network: {network}, Additional parameters: {additional_parameters}'
-
-        elif action == 'unlock':
-            # Handle unlock action
-            return f'Unlocking network: {network}, Additional parameters: {additional_parameters}'
-        else:
-            return "this does nothing!"
+            cur.execute('select name from network where user is NULL')
             
-        num_updated = cur.rowcount
+            # pick top network from select statement
+            picked = cur.fetchone()[0]
+            
+            cur.execute('update network set user ="' +
+            input + '" where name ="' + picked + '"')
+            
+            db.connection.commit()   
+            
+            result = 'Locking network ' + picked
+            
+        # return status of a given network
+        elif action == 'checklock':
+            cur.execute('select user from network where name ="' + input + '"')
+            found = cur.rowcount
+            if found == 0:
+                result = 'No matching row found'
+            elif found != 1:
+                result = 'More than one record found in db matching the network name'
+            else:
+                assigned_user = cur.fetchone()[0]
+                result = input + ' is '
+                
+                if assigned_user is None:
+                    result += 'unlocked and can be assigned to'
+                else:
+                    result += 'locked and is being used by ' + assigned_user
+                    
+        # set given network's user to null
+        elif action == 'unlock':
+            cur.execute('update network set user = NULL'
+            + ' where name = "' + input + '"')
 
-        db.connection.commit()        
-        
-        return str(num_updated)
+            db.connection.commit()         
+            result = 'unlocked'
+        else:
+            result = 'that action does nothing'
+        return result
     except Exception as e:
-        return str(-1)
+        return str(e)
     finally:
         cur.close()
 

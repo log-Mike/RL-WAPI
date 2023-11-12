@@ -36,17 +36,19 @@ def close_mysql(exception):
 def get_table_data_and_columns(cur):
     try:
         # for showing table
-        cur.execute('show columns from network')
-        cols = cur.fetchall()[1:]   
+        #cur.execute('show columns from network')
+        #cols = cur.fetchall()[1:]   
 
         cur.execute('''select name,
-        coalesce(user, "User not assigned"),
+        coalesce(user, "User not assigned")
+        as 'assigned user',
         date_updated as 'last modified'
         from network
         order by 1''')
-        table = cur.fetchall()
-
-        return table, cols
+        
+        
+        return cur.fetchall(),\
+        [col[0] for col in cur.description]
 
     except Exception as e:
         raise e

@@ -37,11 +37,11 @@ def get_table_data_and_columns(cur):
     try:
         # for showing table
         cur.execute('show columns from network')
-        cols = cur.fetchall()[1:]
-        db.connection.commit()        
+        cols = cur.fetchall()[1:]   
 
         cur.execute('''select name,
-        coalesce(user, "User not assigned") as user
+        coalesce(user, "User not assigned"),
+        date_updated as 'last modified'
         from network
         order by 1''')
         table = cur.fetchall()

@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta
 from flask import Flask,jsonify,redirect,render_template,request,url_for
 from flask_mysqldb import MySQL
+
+from dt_helper import format_dt_diff
 
 try:
     import config
@@ -13,21 +14,21 @@ except ImportError as e:
         MYSQL_DB = "sql_db_name"
         MYSQL_PORT = "sql_db_port"
         API_KEY = "single_api_key"
-        SECRET_KEY = "secret_key
+        SECRET_KEY = "secret_key"
         ''')
     raise SystemExit(e)
 
 app=Flask(__name__)
 
-#app.config['SECRET_KEY'] = config.SECRET_KEY
+app.config['SECRET_KEY'] = config.SECRET_KEY
 
 app.config['MYSQL_HOST'] = config.MYSQL_HOST
 app.config['MYSQL_USER'] = config.MYSQL_USER
 app.config['MYSQL_PASSWORD'] = config.MYSQL_PASSWORD
 app.config['MYSQL_DB'] = config.MYSQL_DB
-#app.config['MYSQL_PORT'] = int(config.MYSQL_PORT)
+app.config['MYSQL_PORT'] = int(config.MYSQL_PORT)
 
-#app.config['API_KEY'] = config.API_KEY
+app.config['API_KEY'] = config.API_KEY
 app.config['NO_USER_MSG'] = 'User not assigned'
 
 db = MySQL(app)
@@ -38,11 +39,11 @@ def auth_key(given_key):
 def get_table_and_columns(cur):
     try:
         cur.execute('''select name,
-        coalesce(user, "User not assigned")
+        coalesce(user, "%s")
         as 'assigned user',
         date_updated as 'last modified'
         from network
-        order by 1''')
+        order by 1''' % app.config['NO_USER_MSG'])
         
         # order by makes it worth 
         # keeping it in 1 query
@@ -58,31 +59,6 @@ def get_table_and_columns(cur):
     except Exception as e:
         raise e
 
-def format_dt_diff(dt):
-    # there seems to be a delay between sql/python
-    # 10 seconds seems fine for user interaction
-    time_difference = now = datetime.now() - dt + timedelta(seconds=10)
-    
-    '''
-        under a min show seconds
-        under hour show mins
-        under day show hours / mins
-        >= day show date & time
-    '''
-    
-    if time_difference < timedelta(minutes=1):
-        result = f"{time_difference.seconds} seconds ago"
-    elif time_difference < timedelta(hours=1):
-        result = f"{time_difference.seconds // 60} minutes ago"
-    elif time_difference < timedelta(days=1):
-        secs_per_hour = 60*60
-        hours = time_difference.seconds // secs_per_hour
-        minutes = (time_difference.seconds % secs_per_hour) // 60
-        result = f"{hours} hours {minutes} minutes ago"
-    else:
-        result = dt.strftime('%m/%d/%y %I:%M %p')
-        
-    return result
     
 # result is currently just want happened. need to 
 # change result(return value) to actual output for client
@@ -197,11 +173,9 @@ def start():
     
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'GET':
+    if request.method == 'POST':
         #if already logged in:
         #    return redirect{dashboard}
-        return render_template('login.html')
-    else:
         user = request.form.get('username')
         password = request.form.get('pswrd')
 
@@ -221,6 +195,8 @@ def login():
             
         return redirect(url_for('select_page_admin' if 
         permission == 'admin' else 'select_page_user'))
+    else:
+        return render_template('login.html')
     
 @app.route('/allocate', methods=['GET', 'PATCH'])
 def select_page_admin():

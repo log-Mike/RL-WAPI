@@ -50,6 +50,15 @@ Shauna Hurley - Developer
 - Set up the configuration file
 
    `config.py`
+   
+        should be a python file: config.py with variables:
+        MYSQL_HOST = "sql_db_host"
+        MYSQL_USER = "sql_db_user"
+        MYSQL_PASSWORD = "sql_db_pwd"
+        MYSQL_DB = "sql_db_name"
+        MYSQL_PORT = "sql_db_port"
+        API_KEY = "single_api_key"
+        SECRET_KEY = "secret_key"   
 
 - Run the app
 

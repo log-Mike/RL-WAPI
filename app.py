@@ -1,6 +1,8 @@
 from flask import Flask,g,jsonify,redirect,render_template,request,url_for
 from flask_mysqldb import MySQL
 
+NO_USER_MSG='User   gned'
+
 try:
     import config
 except ImportError as e:
@@ -35,10 +37,6 @@ def close_mysql(exception):
 
 def get_table_data_and_columns(cur):
     try:
-        # for showing table
-        #cur.execute('show columns from network')
-        #cols = cur.fetchall()[1:]   
-
         cur.execute('''select name,
         coalesce(user, "User not assigned")
         as 'assigned user',
@@ -56,41 +54,6 @@ def get_table_data_and_columns(cur):
 def auth_key(given_key):
     return given_key == app.config['API_KEY']
 
- 
-@app.route('/process-table-update', methods=['POST'])
-def select_done():
-    user = request.form.get('user')
-    network = request.form.get('network')
-    
-    try:
-        cur = db.connection.cursor()
-        
-        if user == 'del_user':
-            set_to = 'NULL'
-            update_to = "User not assigned"
-        else:
-            set_to = '"' + user + '"'
-            update_to = user
-        
-        # start transaction
-        cur.execute('update network set user = ' + set_to 
-        + ' where name = "' + network + '"')
-            
-        num_updated = cur.rowcount
-
-        db.connection.commit()
-        
-        return jsonify({
-            'num_updated' : num_updated,
-            'network': network,
-            'user': update_to
-        })
-    except Exception as e:
-        return jsonify({
-            'error': 'An error occurred: ' + str(e)
-        })
-    finally:
-        cur.close()
     
 # result is currently just want happened. need to 
 # change result(return value) to actual output for client
@@ -201,68 +164,96 @@ def handle_request(action):
 def start():
     return render_template('index.html')
     
-@app.route('/process-login-request', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'GET':
+        #if already logged in:
+        #    return redirect{dashboard}
+        return render_template('login.html')
+    else:
+        user = request.form.get('username')
+        password = request.form.get('pswrd')
 
-    user = request.form.get('username')
-    password = request.form.get('pswrd')
-
-    '''
-    validate password through ldap
-    
-    
-    
-    
-    
-    
-    
-    '''
-    
-    try:
-        cur = db.connection.cursor()
-        cur.execute('''select access_permission
-        from userInfo
-        where username=%s''',(user,))
-        permission = cur.fetchone()[0]
-    except Exception as e:
-        return render_template('error.html', 
-                msg='An error occurred: ' + str(e)) 
-    finally:
-        cur.close()
+        '''
+        validate password through ldap
+        '''
         
-    return redirect(url_for('select_page_admin' if 
-    permission == 'admin' else 'select_page_user'))
-  
-
-  
-@app.route('/allocate')
+        try:
+            cur = db.connection.cursor()
+            cur.execute('''select access_permission
+            from userInfo
+            where username=%s''',(user,))
+            permission = cur.fetchone()[0]
+        except Exception as e:
+            return render_template('error.html', 
+                    msg='An error occurred: ' + str(e)) 
+        finally:
+            cur.close()
+            
+        return redirect(url_for('select_page_admin' if 
+        permission == 'admin' else 'select_page_user'))
+    
+@app.route('/allocate', methods=['GET', 'PATCH'])
 def select_page_admin():
-    try:
-        cur = db.connection.cursor()
-
-        # for dropdowns
-        cur.execute('''select username
-        from userInfo
-        order by 1''')
-        avail_users = cur.fetchall()
+    if request.method == 'PATCH':
+        user = request.form.get('user')
+        network = request.form.get('network')
         
-        cur.execute('select name from network order by 1')
-        avail_networks = cur.fetchall()
-        
-        table, cols = get_table_data_and_columns(cur)
+        try:
+            cur = db.connection.cursor()
+            
+            if user == 'del_user':
+                set_to = 'NULL'
+                update_to = "User not assigned"
+            else:
+                set_to = '"' + user + '"'
+                update_to = user
+            
+            cur.execute('update network set user = ' + set_to 
+            + ' where name = "' + network + '"')
+                
+            num_updated = cur.rowcount
 
-        return render_template('select.html', 
-        column1_values=avail_users, 
-        column2_values=avail_networks, 
-        data=table, 
-        columns=cols)
+            db.connection.commit()
+            
+            return jsonify({
+                'num_updated' : num_updated,
+                'network': network,
+                'user': update_to
+            })
+        except Exception as e:
+            return jsonify({
+                'error': 'An error occurred: ' + str(e)
+            })
+        finally:
+            cur.close()   
+    else:        
+        try:
+            cur = db.connection.cursor()
 
-    except Exception as e:
-        return render_template('error.html', 
-        msg='An error occurred: ' + str(e))
+            # for dropdowns
+            cur.execute('''select username
+            from userInfo
+            order by 1''')
+            avail_users = cur.fetchall()
+            
+            cur.execute('select name from network order by 1')
+            avail_networks = cur.fetchall()
+            
+            table, cols = get_table_data_and_columns(cur)
 
-    finally:
-        cur.close()
+            return render_template('select.html', 
+            column1_values=avail_users, 
+            column2_values=avail_networks, 
+            data=table, 
+            columns=cols)
+
+        except Exception as e:
+            return render_template('error.html', 
+            msg='An error occurred: ' + str(e))
+
+        finally:
+            cur.close()
 
 @app.route('/view')
 def select_page_user():

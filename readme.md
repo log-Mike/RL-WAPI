@@ -1,14 +1,21 @@
+
+
 # Resource Lock Web API
 Made during/for Rowan University Software Engineering Fall 2023 class. Developed using the agile framework: Scrum.
 
 **Resource Lock Web API** is a program that will perform automatic distribution of resources and can be integrated into Lockheed Martin’s team’s CI/CD pipeline. In addition, a web application that will be used to view resource availability, and manually free and assign resources.
 
 # Team makeup:
-Michael Loughrin - Developer
+
 
 Russell Bamberger - Product Owner 
 
 Phoenix Poitras - Scrum Master
+
+Michael Loughrin - Developer
+**<br/>**
+**<br/>**
+
 
 Victoria Bostick - Developer
 
@@ -42,23 +49,23 @@ Shauna Hurley - Developer
     
 - Set up the configuration file
 
-    	`config.py`
+   `config.py`
 
 - Run the app
 
 	`flask run`
 
-You should now be able to access the web app at http://localhost:5000, typicall defaulted to http://127.0.0.1:5000
+You should now be able to access the web app at http://localhost:5000 , defaulted to 5000
 
 # To access the API through client shell
 
 - Set the API key
 
-	`$env:API_KEY = "api_key"
+	`$env:API_KEY = "api_key"`
 
     or
 
-	'export API_KEY='api_key'`
+	`export API_KEY="api_key"`
 
 - Execute the script
 	

@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const user = userSelect.value;
         const network = networkSelect.value.toLowerCase();
 
-        // Make an AJAX POST request to update the record
+        // Make an AJAX PATCH request to update the record
         fetch("/allocate", {
             method: "PATCH",
             body: new URLSearchParams({ user, network }),
@@ -49,6 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             // make the update
                             if (tableBody.rows[mid].cells[1].textContent != data.user){
                                 tableBody.rows[mid].cells[1].textContent = data.user;
+                                tableBody.rows[mid].cells[2].textContent = 'Just now';
                                 updated = true;
                             }
                             break;

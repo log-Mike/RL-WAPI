@@ -1,8 +1,6 @@
 from flask import Flask,g,jsonify,redirect,render_template,request,url_for
 from flask_mysqldb import MySQL
 
-NO_USER_MSG='User   gned'
-
 try:
     import config
 except ImportError as e:
@@ -19,12 +17,17 @@ except ImportError as e:
 
 app=Flask(__name__)
 
+app.config['SECRET_KEY'] = config.SECRET_KEY
+
 app.config['MYSQL_HOST'] = config.MYSQL_HOST
 app.config['MYSQL_USER'] = config.MYSQL_USER
 app.config['MYSQL_PASSWORD'] = config.MYSQL_PASSWORD
 app.config['MYSQL_DB'] = config.MYSQL_DB
 app.config['MYSQL_PORT'] = int(config.MYSQL_PORT)
+
 app.config['API_KEY'] = config.API_KEY
+
+app.config['NO_USER_MSG'] = 'User not assigned'
 
 db = MySQL(app)
 

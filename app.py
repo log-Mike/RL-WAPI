@@ -1,8 +1,6 @@
 from flask import Flask,jsonify,redirect,render_template,request,url_for
 from flask_mysqldb import MySQL
 
-from dt_helper import format_dt_diff
-
 try:
     import config
 except ImportError as e:
@@ -29,6 +27,8 @@ app.config['MYSQL_DB'] = config.MYSQL_DB
 app.config['MYSQL_PORT'] = int(config.MYSQL_PORT)
 
 app.config['API_KEY'] = config.API_KEY
+
+# get_tables_and_columns
 app.config['NO_USER_MSG'] = 'User not assigned'
 
 db = MySQL(app)
@@ -38,23 +38,26 @@ def auth_key(given_key):
     
 def get_table_and_columns(cur):
     try:
-        cur.execute('''select name,
-        coalesce(user, "%s")
-        as 'assigned user',
-        date_updated as 'last modified'
-        from network
-        order by 1''' % app.config['NO_USER_MSG'])
-        
-        # order by makes it worth 
-        # keeping it in 1 query
-        
-        rows = cur.fetchall()
-        row = [(row[0], row[1], format_dt_diff(row[2])) for row in rows]
-        
-        columns = [col[0] for col in cur.description]
-        
+        cur.execute('''SELECT name, COALESCE(user, 'User not assigned') AS assigned_user,
+                CASE
+                    WHEN TIMESTAMPDIFF(SECOND, date_updated, NOW()) < 60 THEN
+                        CONCAT(TIMESTAMPDIFF(SECOND, date_updated, NOW()), ' seconds ago')
+                    WHEN TIMESTAMPDIFF(MINUTE, date_updated, NOW()) < 60 THEN
+                        CONCAT(TIMESTAMPDIFF(MINUTE, date_updated, NOW()), ' minutes ago')
+                    WHEN TIMESTAMPDIFF(HOUR, date_updated, NOW()) < 24 THEN
+                        CONCAT(
+                            TIMESTAMPDIFF(HOUR, date_updated, NOW()),
+                            ' hours ',
+                            TIMESTAMPDIFF(MINUTE, date_updated, NOW()) % 60,
+                            ' minutes ago'
+                        )
+                    ELSE DATE_FORMAT(date_updated, '%m/%d/%y %h:%i %p')
+                END AS last_modified
+            FROM network
+            ORDER BY 1''')
 
-        return row, columns
+        return cur.fetchall(), [col[0] for col in cur.description]
+
 
     except Exception as e:
         raise e
@@ -232,30 +235,29 @@ def select_page_admin():
                 'error': 'An error occurred: ' + str(e)
             }) 
     else:        
-        try:
-            with db.connection.cursor() as cur:
+        #try:
+        with db.connection.cursor() as cur:
 
-                # for dropdowns
-                cur.execute('''select username
+            # for dropdowns
+            cur.execute('''select username
                 from userInfo
                 order by 1''')
-                avail_users = cur.fetchall()
+            avail_users = cur.fetchall()
                 
-                cur.execute('select name from network order by 1')
-                avail_networks = cur.fetchall()
+            cur.execute('select name from network order by 1')
+            avail_networks = cur.fetchall()
                 
-                table, cols = get_table_and_columns(cur)
+            table, cols = get_table_and_columns(cur)
 
-                return render_template('select.html', 
+            return render_template('select.html', 
                 column1_values=avail_users, 
                 column2_values=avail_networks, 
                 data=table,
                 columns=cols)
 
-        except Exception as e:
-            return render_template('error.html', 
-            msg='An error occurred: ' + str(e))
-            cur.close()
+        #except Exception as e:
+        #    return render_template('error.html', 
+         #   msg='An error occurred: ' + str(e))
 
 @app.route('/view')
 def select_page_user():

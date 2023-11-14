@@ -38,7 +38,7 @@ def auth_key(given_key):
     
 def get_table_and_columns(cur):
     try:
-        cur.execute('''SELECT name, COALESCE(user, 'User not assigned') AS assigned_user,
+        cur.execute('''SELECT name, COALESCE(user, 'User not assigned'),
                 CASE
                     WHEN TIMESTAMPDIFF(SECOND, date_updated, NOW()) < 60 THEN
                         CONCAT(TIMESTAMPDIFF(SECOND, date_updated, NOW()), ' seconds ago')
@@ -52,11 +52,11 @@ def get_table_and_columns(cur):
                             ' minutes ago'
                         )
                     ELSE DATE_FORMAT(date_updated, '%m/%d/%y %h:%i %p')
-                END AS last_modified
+                END
             FROM network
             ORDER BY 1''')
 
-        return cur.fetchall(), [col[0] for col in cur.description]
+        return cur.fetchall(), ('Network', 'Assigned User', 'Last updated')
 
 
     except Exception as e:

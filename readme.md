@@ -1,5 +1,6 @@
 
 
+
 # Resource Lock Web API
 Made during/for Rowan University Software Engineering Fall 2023 class. Developed using the agile framework: Scrum.
 
@@ -13,7 +14,6 @@ Russell Bamberger - Product Owner
 Phoenix Poitras - Scrum Master
 
 Michael Loughrin - Developer
-**<br/>**
 **<br/>**
 
 
@@ -56,7 +56,9 @@ Shauna Hurley - Developer
         MYSQL_USER = "sql_db_user"
         MYSQL_PASSWORD = "sql_db_pwd"
         MYSQL_DB = "sql_db_name"
-        MYSQL_PORT = "sql_db_port"
+        MYSQL_PORT = {port_number}
+        
+        # These can be generated using gen_key.py
         API_KEY = "single_api_key"
         SECRET_KEY = "secret_key"   
 

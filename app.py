@@ -70,9 +70,9 @@ def lock(cur, user):
                             where username = %s''', (user,))
 
     if found == 0:
-        result = 'No matching user'
+        result = '1 - No matching user'
     elif found != 1:
-        result = 'More than one matching user record found'
+        result = '2 - More than one matching user record found'
     else:
         found = cur.execute('''select name
                                 from network
@@ -81,7 +81,7 @@ def lock(cur, user):
 
         # found no networks with a null user
         if found == 0:
-            result = 'No free networks'
+            result = '3 - No free networks'
         else:
             picked = cur.fetchone()[0]
             found = cur.execute('''update network
@@ -89,7 +89,7 @@ def lock(cur, user):
                                     where name = %s ''', (user, picked))
 
             if found != 1:
-                result = 'problem updating db'
+                result = '4 - problem updating db'
             else:
                 result = f'{user} locked to {picked}'
                 db.connection.commit()
@@ -104,9 +104,9 @@ def unlock(cur, network):
                             where name = %s''', (network,))
 
     if found == 0:
-        result = 'No matching network found'
+        result = '5 - No matching network found'
     elif found != 1:
-        result = 'More than one matching network found, update transaction rollbacked'
+        result = '6 - More than one matching network found, update transaction rollbacked'
     else:
         result = f'{network} unlocked'
         db.connection.commit()
@@ -121,9 +121,9 @@ def checklock(cur, network):
                             where name = %s''', (network,))
 
     if found == 0:
-        result = 'No matching row found'
+        result = '7 - No matching row found'
     elif found != 1:
-        result = 'More than one record found in db matching the network name'
+        result = '8 - More than one record found in db matching the network name'
     else:
         assigned_user = cur.fetchone()[0]
 
@@ -146,7 +146,7 @@ def handle_request(action):
         try:
             with db.connection.cursor() as cur:
                 method = request.method
-                err_msg = 'request and action not recognized'
+                err_msg = '9 - request and action not recognized'
 
                 if method == 'PATCH':
                     if action == 'lock':

@@ -5,3 +5,7 @@
 *pycache*
 **/.DS_Store
 **/config.py
+**/ProjectSettings.json
+**/PythonSettings.json
+**/slnx.sqlite
+**/VSWorkspaceState.json

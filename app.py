@@ -1,7 +1,7 @@
-from flask import Flask,jsonify,redirect,render_template,request,url_for
+from flask import Flask, jsonify, redirect, render_template, request, url_for
 from flask_mysqldb import MySQL
 
-app=Flask(__name__)
+app = Flask(__name__)
 
 try:
     app.config.from_pyfile('config.py')
@@ -25,21 +25,14 @@ except FileNotFoundError as e:
         ''')
 
 
-
-#app.config.from_object(config)
-
-
-# get_tables_and_columns
 app.config['NO_USER_MSG'] = 'User not assigned'
 
 db = MySQL(app)
 
-def auth_key(given_key):
-    return given_key == app.config['API_KEY']
-    
+
 def get_table_and_columns(cur):
     try:
-        cur.execute('''select name, coalesce(user, 'User not assigned'),
+        cur.execute(f'''select name, coalesce(user, "{app.config["NO_USER_MSG"]}"),
                 case
                     when timestampdiff(second, date_updated, now()) < 60 then
                         concat(timestampdiff(second, date_updated, now()), ' seconds ago')
@@ -59,9 +52,9 @@ def get_table_and_columns(cur):
 
         return cur.fetchall(), ('Network', 'Assigned User', 'Last updated')
 
-
     except Exception as e:
         raise e
+
 
 # set any free network to given user
 # should this have some sort of distribution?
@@ -69,13 +62,12 @@ def get_table_and_columns(cur):
 # else says bad input
 # to be assigned to a network
 def lock(cur, user):
-                    
-    # verifying existance
+    # verifying existence
     cur.execute('select 0 from userInfo '
-    + 'where username="' + user + '"')
-                    
+                + 'where username="' + user + '"')
+
     found = cur.rowcount
-                    
+
     if found == 0:
         result = 'No matching user'
     elif found != 1:
@@ -85,52 +77,53 @@ def lock(cur, user):
                         from network
                         where user is NULL
                         limit 1''')
-                         
+
         # found no networks with a null user
         if cur.rowcount == 0:
             result = 'No free networks'
         else:
-            picked = cur.fetchone()[0]                
+            picked = cur.fetchone()[0]
             cur.execute('''update network
                             set user ="''' + user
-                            + '" where name ="' + picked + '"')
-                            
+                        + '" where name ="' + picked + '"')
+
             found = cur.rowcount
-                            
+
             if found != 1:
                 result = 'problem updating db'
-            else:                
+            else:
                 result = '%s locked to %s' % (user, picked)
                 db.connection.commit()
-                
+
     return result
+
 
 # set given network's user to null
 def unlock(cur, network):
     cur.execute('update network set user = NULL'
-    + ' where name = "' + network + '"')
-                    
+                + ' where name = "' + network + '"')
+
     found = cur.rowcount
-                    
+
     if found == 0:
         result = 'No matching network found'
     elif found != 1:
-        result = 'More than one matching network '
-        + 'found, update transaction rollbacked'
+        result = 'More than one matching network found, update transaction rollbacked'
     else:
         result = network + ' unlocked'
         db.connection.commit()
-        
+
     return result
-                                                
+
+
 # return status of a given network
 def checklock(cur, network):
     cur.execute('''select user
                     from network
                     where name ="''' + network + '"')
-                    
+
     found = cur.rowcount
-                    
+
     if found == 0:
         result = 'No matching row found'
     elif found != 1:
@@ -141,38 +134,36 @@ def checklock(cur, network):
         if assigned_user is None:
             result += 'unlocked'
         else:
-            result += 'locked by %s' % (assigned_user)
-            
+            result += 'locked by %s' % assigned_user
+
     return result
-    
+
+
 # result is currently just want happened. need to 
 # change result(return value) to actual output for client
 @app.route('/api/<string:action>', methods=['GET', 'PATCH'])
 def handle_request(action):
-    
     api_key = request.headers.get('API-KEY')
 
-    if not auth_key(api_key):
+    if not api_key == app.config['API_KEY']:
         return 'bad api key'
-   
-    result = 'an error occured!'
 
     try:
-        input = request.args.get('input')
+        param = request.args.get('input')
         try:
             with db.connection.cursor() as cur:
                 method = request.method
-                err_msg = 'request and action not recgonized'
-                
+                err_msg = 'request and action not recognized'
+
                 if method == 'PATCH':
                     if action == 'lock':
-                        result = lock(cur, input)
+                        result = lock(cur, param)
                     elif action == 'unlock':
-                        result = unlock(cur, input)
+                        result = unlock(cur, param)
                     else:
                         result = err_msg
                 elif method == 'GET' and action == 'checklock':
-                    result = checklock(cur, input)
+                    result = checklock(cur, param)
                 else:
                     result = err_msg
 
@@ -180,17 +171,19 @@ def handle_request(action):
             return str(e)
     except Exception as e:
         return str(e)
-        
+
     return result
-    
+
+
 @app.route('/')
 def start():
     return render_template('index.html')
-    
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        #if already logged in:
+        # if already logged in:
         #    return redirect{dashboard}
         user = request.form.get('username')
         password = request.form.get('pswrd')
@@ -198,56 +191,48 @@ def login():
         '''
         validate password through ldap
         '''
-        
-        try:
-            with db.connection.cursor() as cur:
-                cur.execute('''select access_permission
-                from userInfo
-                where username=%s''',(user,))
-                permission = cur.fetchone()[0]
-        except Exception as e:
-            return render_template('error.html', 
-                    msg='An error occurred: ' + str(e)) 
-            
-        return redirect(url_for('select_page_admin' if 
-        permission == 'admin' else 'select_page_user'))
+
+        permission = 'admin'
+
+        return redirect(url_for('select_page_admin' if
+                                permission == 'admin' else 'select_page_user'))
     else:
         return render_template('login.html')
-    
+
+
 @app.route('/allocate', methods=['GET', 'PATCH'])
 def select_page_admin():
     if request.method == 'PATCH':
         user = request.form.get('user')
         network = request.form.get('network')
-        
+
         try:
-            with db.connection.cursor() as cur:                
+            with db.connection.cursor() as cur:
                 if user == 'del_user':
                     set_to = 'NULL'
                     update_to = app.config['NO_USER_MSG']
                 else:
                     set_to = '"' + user + '"'
                     update_to = user
-                
-                cur.execute('update network set user = ' + set_to 
-                + ' where name = "' + network + '"')
-                 
-                
+
+                cur.execute('update network set user = ' + set_to
+                            + ' where name = "' + network + '"')
+
                 num_updated = cur.rowcount
-                
+
                 if num_updated == 1:
                     db.connection.commit()
 
                 return jsonify({
-                    'num_updated' : num_updated,
+                    'num_updated': num_updated,
                     'network': network,
                     'user': update_to
                 })
         except Exception as e:
             return jsonify({
                 'error': 'An error occurred: ' + str(e)
-            }) 
-    else:        
+            })
+    else:
         try:
             with db.connection.cursor() as cur:
 
@@ -256,36 +241,38 @@ def select_page_admin():
                     from userInfo
                     order by 1''')
                 avail_users = cur.fetchall()
-                    
+
                 cur.execute('select name from network order by 1')
                 avail_networks = cur.fetchall()
-                    
+
                 table, cols = get_table_and_columns(cur)
 
-                return render_template('select.html', 
-                    column1_values=avail_users, 
-                    column2_values=avail_networks, 
-                    data=table,
-                    columns=cols)
+                return render_template('select.html',
+                                       column1_values=avail_users,
+                                       column2_values=avail_networks,
+                                       data=table,
+                                       columns=cols)
 
         except Exception as e:
-            return render_template('error.html', 
-            msg='An error occurred: ' + str(e))
+            return render_template('error.html',
+                                   msg='An error occurred: ' + str(e))
+
 
 @app.route('/view')
 def select_page_user():
     try:
-        with db.connection.cursor() as cur:        
+        with db.connection.cursor() as cur:
             table, cols = get_table_and_columns(cur)
 
             return render_template('view.html',
-            data=table,
-            columns=cols)
+                                   data=table,
+                                   columns=cols)
 
     except Exception as e:
         return render_template('error.html',
-        msg='An error occurred: ' + str(e))
+                               msg='An error occurred: ' + str(e))
+
 
 # for development run it on local in debug mode
-if __name__=='__main__':
-    app.run(debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', debug=True, port=5000)

@@ -63,36 +63,35 @@ def get_table_and_columns(cur):
 # to be assigned to a network
 def lock(cur, user):
     # verifying existence
-    cur.execute('select 0 from userInfo '
-                + 'where username="' + user + '"')
-
-    found = cur.rowcount
+    # this should be from LDAP
+    # & not SQL ?
+    found = cur.execute('''select 0
+                            from userInfo
+                            where username = %s''', (user,))
 
     if found == 0:
         result = 'No matching user'
     elif found != 1:
         result = 'More than one matching user record found'
     else:
-        cur.execute('''select name
-                        from network
-                        where user is NULL
-                        limit 1''')
+        found = cur.execute('''select name
+                                from network
+                                where user is NULL
+                                limit 1''')
 
         # found no networks with a null user
-        if cur.rowcount == 0:
+        if found == 0:
             result = 'No free networks'
         else:
             picked = cur.fetchone()[0]
-            cur.execute('''update network
-                            set user ="''' + user
-                        + '" where name ="' + picked + '"')
-
-            found = cur.rowcount
+            found = cur.execute('''update network
+                                    set user = %s
+                                    where name = %s ''', (user, picked))
 
             if found != 1:
                 result = 'problem updating db'
             else:
-                result = '%s locked to %s' % (user, picked)
+                result = f'{user} locked to {picked}'
                 db.connection.commit()
 
     return result
@@ -100,17 +99,16 @@ def lock(cur, user):
 
 # set given network's user to null
 def unlock(cur, network):
-    cur.execute('update network set user = NULL'
-                + ' where name = "' + network + '"')
-
-    found = cur.rowcount
+    found = cur.execute('''update network
+                            set user = NULL
+                            where name = %s''', (network,))
 
     if found == 0:
         result = 'No matching network found'
     elif found != 1:
         result = 'More than one matching network found, update transaction rollbacked'
     else:
-        result = network + ' unlocked'
+        result = f'{network} unlocked'
         db.connection.commit()
 
     return result
@@ -118,11 +116,9 @@ def unlock(cur, network):
 
 # return status of a given network
 def checklock(cur, network):
-    cur.execute('''select user
-                    from network
-                    where name ="''' + network + '"')
-
-    found = cur.rowcount
+    found = cur.execute('''select user
+                            from network
+                            where name = %s''', (network,))
 
     if found == 0:
         result = 'No matching row found'
@@ -130,13 +126,10 @@ def checklock(cur, network):
         result = 'More than one record found in db matching the network name'
     else:
         assigned_user = cur.fetchone()[0]
-        result = network + ' is '
-        if assigned_user is None:
-            result += 'unlocked'
-        else:
-            result += 'locked by %s' % assigned_user
 
-    return result
+        result = 'unlocked' if assigned_user is None else f'locked by {assigned_user}'
+
+    return f'{network} is {result}'
 
 
 # result is currently just want happened. need to 
@@ -208,17 +201,16 @@ def select_page_admin():
 
         try:
             with db.connection.cursor() as cur:
-                if user == 'del_user':
-                    set_to = 'NULL'
+                if user == 'DEL_USER':
+                    set_to = None
                     update_to = app.config['NO_USER_MSG']
                 else:
-                    set_to = '"' + user + '"'
+                    set_to = user
                     update_to = user
 
-                cur.execute('update network set user = ' + set_to
-                            + ' where name = "' + network + '"')
-
-                num_updated = cur.rowcount
+                num_updated = cur.execute('''update network
+                                            set user=%s
+                                            where name=%s''', (set_to, network))
 
                 if num_updated == 1:
                     db.connection.commit()
@@ -238,11 +230,13 @@ def select_page_admin():
 
                 # for dropdowns
                 cur.execute('''select username
-                    from userInfo
-                    order by 1''')
+                                from userInfo
+                                order by 1''')
                 avail_users = cur.fetchall()
 
-                cur.execute('select name from network order by 1')
+                cur.execute('''select name
+                                from network
+                                order by 1''')
                 avail_networks = cur.fetchall()
 
                 table, cols = get_table_and_columns(cur)

@@ -2,10 +2,11 @@
 **/.venv
 **/virt
 **/env
-*pycache*
+**/*pycache*
 **/.DS_Store
 **/config.py
 **/ProjectSettings.json
 **/PythonSettings.json
 **/slnx.sqlite
 **/VSWorkspaceState.json
+**/.vs

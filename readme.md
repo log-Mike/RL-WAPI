@@ -83,15 +83,19 @@ You should now be able to access the web app at http://localhost:5000 , defaulte
 	`./client.sh lock network`
 
 # LDAP Server
-- Current version conects to FreeIPA which implements LDAP.
+- Current version conects to a LDAP server that is hosted on a local FreeIPA.
 
 - To test locally, launch an OS capable of hosting FreeIPA (such as [the lastest Fedora release](https://fedoraproject.org/workstation/download))
 
+- If you want, set host name in /etc/hosts (ie: giantest.local.com)
+  
 - Resolve download issues, set up the server or client using:
 
 `sudo dnf install free-ipa {client/server}`
 
 `sudo ipa-{client/server}-install`
+
+- For default installation, press enter for all except "config from these settings?", type yes
 
 # Exit Codes
 - Bash

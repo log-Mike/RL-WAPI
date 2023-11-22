@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const network = networkSelect.value.toLowerCase();
 
         // Make an AJAX PATCH request to update the record
-        fetch("/allocate", {
+        fetch("/home", {
             method: "PATCH",
             body: new URLSearchParams({ user, network }),
             headers: { "Content-Type": "application/x-www-form-urlencoded" }

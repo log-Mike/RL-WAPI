@@ -1,7 +1,10 @@
 from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_mysqldb import MySQL
 from ldap3 import Connection
 from ldap3.utils.conv import escape_filter_chars
+
+from user import User
 
 app = Flask(__name__)
 
@@ -29,6 +32,52 @@ except FileNotFoundError as e:
 app.config['NO_USER_MSG'] = 'User not assigned'
 
 db = MySQL(app)
+
+login_manager = LoginManager(app)
+login_manager.session_protection = 'strong'
+
+# takes either uid & a user_id(loughr95)
+# or uidNumber & a uidNumber (0888205)
+# returns User object for login functionality
+def get_user_info(search_on, search_input):
+    if search_on == "uid":
+        search_request = "uidNumber"
+        on_key = False
+    elif search_on == "uidNumber":
+        search_request = "uid"
+        on_key = True
+    else:
+        return None
+
+    with Connection('giantest.local.com',
+                    user='uid=admin,cn=users,cn=accounts,dc=local,dc=com',
+                    password='b' * 8) as admin_connect:
+        admin_connect.bind()
+
+        search_base = 'cn=users,cn=accounts,dc=local,dc=com'
+        search_filter = f'(&(objectclass=person)({search_on}={search_input}))'
+        admin_connect.search(search_base, search_filter, attributes=['memberOf', search_request])
+
+        is_admin = 'cn=admins,cn=groups,cn=accounts,dc=local,dc=com' in admin_connect.entries[0]['memberOf']
+
+        if on_key:
+            unum = search_input
+            uid = admin_connect.entries[0]['uid']
+        else:
+            unum = admin_connect.entries[0]['uidNumber']
+            uid = search_input
+
+
+    return User(str(unum), str(uid), is_admin)
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    pass
+
+@login_manager.user_loader
+def load_user(user_id):
+    print(user_id)
+    return get_user_info("uidNumber", user_id)
 
 
 def get_table_and_columns(cur):
@@ -133,7 +182,7 @@ def checklock(cur, network):
     return f'{network} is {result}'
 
 
-# result is currently just want happened. need to 
+# result is currently just want happened. need to
 # change result(return value) to actual output for client
 @app.route('/api/<string:action>', methods=['GET', 'PATCH'])
 def handle_request(action):
@@ -182,32 +231,36 @@ def login():
         user = escape_filter_chars(request.form.get('username'))
         password = escape_filter_chars(request.form.get('pswrd'))
 
+        # NEEDS CONTEXT MANAGER ##############
         # Bind with the user's DN and password to authenticate
-        user_connection = Connection('giantest.local.com', user=f'uid={user},cn=users,cn=accounts,dc=local,dc=com',
-                                     password=password)
+        with Connection('giantest.local.com',
+                        user=f'uid={user},cn=users,cn=accounts,dc=local,dc=com',
+                        password=password) as connection:
+            if connection.bind():
+                print(f"User {user} authenticated successfully.")
+                # search for users member info
+                login_user(get_user_info("uid", user))
 
-        if user_connection.bind():
-            print(f"User {user} authenticated successfully.")
-            # search for users member info
-
-            search_base = 'cn=users,cn=accounts,dc=local,dc=com'
-            search_filter = f'(&(objectclass=person)(uid={user}))'
-            user_connection.search(search_base, search_filter, attributes=['memberOf'])
-
-            # Check if the user is a member of the 'admins' group
-            # should set up login so that user has (base line) 1 field: is_admin
-            is_admin = 'cn=admins,cn=groups,cn=accounts,dc=local,dc=com' in user_connection.entries[0].memberOf
-            return redirect(url_for('select_page_admin' if
-                                    is_admin else 'select_page_user'))
-        else:
-            # flash user saying bad auth
-            return render_template('login.html')
+                return redirect(url_for('build_home'))
+            else:
+                # flash user saying bad auth
+                return render_template('login.html')
     else:
         return render_template('login.html')
 
+@app.route('/logout')
+def logout():
+    if current_user.is_authenticated:
+        logout_user()
+    return redirect(url_for('start'))
 
-@app.route('/allocate', methods=['GET', 'PATCH'])
-def select_page_admin():
+@login_manager.unauthorized_handler
+def unauthorized_callback():
+    return redirect(url_for('start'))
+
+@app.route('/home', methods=['PATCH'])
+@login_required
+def handle_update():
     if request.method == 'PATCH':
         user = request.form.get('user')
         network = request.form.get('network')
@@ -237,41 +290,30 @@ def select_page_admin():
             return jsonify({
                 'error': 'An error occurred: ' + str(e)
             })
-    else:
-        try:
-            with db.connection.cursor() as cur:
-
-                # for dropdowns
-                cur.execute('''select username
-                                from userInfo
-                                order by 1''')
-                avail_users = cur.fetchall()
-
-                cur.execute('''select name
-                                from network
-                                order by 1''')
-                avail_networks = cur.fetchall()
-
-                table, cols = get_table_and_columns(cur)
-
-                return render_template('select.html',
-                                       column1_values=avail_users,
-                                       column2_values=avail_networks,
-                                       data=table,
-                                       columns=cols)
-
-        except Exception as e:
-            return render_template('error.html',
-                                   msg='An error occurred: ' + str(e))
 
 
-@app.route('/view')
-def select_page_user():
+@app.route('/home')
+@login_required
+def build_home():
     try:
         with db.connection.cursor() as cur:
+
+            # for dropdowns
+            cur.execute('''select username
+                                from userInfo
+                                order by 1''')
+            avail_users = cur.fetchall()
+
+            cur.execute('''select name
+                                from network
+                                order by 1''')
+            avail_networks = cur.fetchall()
+
             table, cols = get_table_and_columns(cur)
 
-            return render_template('view.html',
+            return render_template('select.html',
+                                   column1_values=avail_users,
+                                   column2_values=avail_networks,
                                    data=table,
                                    columns=cols)
 

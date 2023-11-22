@@ -82,20 +82,45 @@ You should now be able to access the web app at http://localhost:5000 , defaulte
 	
 	`./client.sh lock network`
 
+# LDAP Server
+- Current version conects to FreeIPA which implements LDAP.
+
+- To test locally, launch an OS capable of hosting FreeIPA (such as [the lastest Fedora release](https://fedoraproject.org/workstation/download))
+
+- Resolve download issues, set up the server or client using:
+
+`sudo dnf install free-ipa {client/server}`
+
+`sudo ipa-{client/server}-install`
+
 # Exit Codes
 - Bash
+
     0 = Successful
+
     1 = API_KEY is not set. Please set the API_KEY environment variable
+
     2 = Usage: $0 lock/checklock/unlock user/network/network
+
     3 = Not an action
 
+
  - Python
+
     4 = No matching user
+
     5 = More than one matching user record found
+
     6 = No free networks
+
     7 = Problem Updating Database
+
     8 = No matching network found
+
     9 = More than one matching network found, update transaction rollbacked
+
     10 = No matching row found
+
     11 = More than one record found in db matching the network name
+
     12 = Request and action not recognized

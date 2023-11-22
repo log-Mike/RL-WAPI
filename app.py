@@ -1,5 +1,7 @@
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 from flask_mysqldb import MySQL
+from ldap3 import Connection
+from ldap3.utils.conv import escape_filter_chars
 
 app = Flask(__name__)
 
@@ -23,7 +25,6 @@ except FileNotFoundError as e:
         python gen_key.py secret
         python gen_key.py api
         ''')
-
 
 app.config['NO_USER_MSG'] = 'User not assigned'
 
@@ -178,17 +179,29 @@ def login():
     if request.method == 'POST':
         # if already logged in:
         #    return redirect{dashboard}
-        user = request.form.get('username')
-        password = request.form.get('pswrd')
+        user = escape_filter_chars(request.form.get('username'))
+        password = escape_filter_chars(request.form.get('pswrd'))
 
-        '''
-        validate password through ldap
-        '''
+        # Bind with the user's DN and password to authenticate
+        user_connection = Connection('giantest.local.com', user=f'uid={user},cn=users,cn=accounts,dc=local,dc=com',
+                                     password=password)
 
-        permission = 'admin'
+        if user_connection.bind():
+            print(f"User {user} authenticated successfully.")
+            # search for users member info
 
-        return redirect(url_for('select_page_admin' if
-                                permission == 'admin' else 'select_page_user'))
+            search_base = 'cn=users,cn=accounts,dc=local,dc=com'
+            search_filter = f'(&(objectclass=person)(uid={user}))'
+            user_connection.search(search_base, search_filter, attributes=['memberOf'])
+
+            # Check if the user is a member of the 'admins' group
+            # should set up login so that user has (base line) 1 field: is_admin
+            is_admin = 'cn=admins,cn=groups,cn=accounts,dc=local,dc=com' in user_connection.entries[0].memberOf
+            return redirect(url_for('select_page_admin' if
+                                    is_admin else 'select_page_user'))
+        else:
+            # flash user saying bad auth
+            return render_template('login.html')
     else:
         return render_template('login.html')
 

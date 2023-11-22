@@ -36,44 +36,6 @@ db = MySQL(app)
 login_manager = LoginManager(app)
 login_manager.session_protection = 'strong'
 
-# takes either uid & a user_id(loughr95)
-# or uidNumber & a uidNumber (0888205)
-# returns User object for login functionality
-def get_user_info(search_on, search_input):
-    if search_on == "uid":
-        search_request = "uidNumber"
-        on_key = False
-    elif search_on == "uidNumber":
-        search_request = "uid"
-        on_key = True
-    else:
-        return None
-
-    with Connection('giantest.local.com',
-                    user='uid=admin,cn=users,cn=accounts,dc=local,dc=com',
-                    password='b' * 8) as admin_connect:
-        admin_connect.bind()
-
-        search_base = 'cn=users,cn=accounts,dc=local,dc=com'
-        search_filter = f'(&(objectclass=person)({search_on}={search_input}))'
-        admin_connect.search(search_base, search_filter, attributes=['memberOf', search_request])
-
-        is_admin = 'cn=admins,cn=groups,cn=accounts,dc=local,dc=com' in admin_connect.entries[0]['memberOf']
-
-        if on_key:
-            unum = search_input
-            uid = admin_connect.entries[0]['uid']
-        else:
-            unum = admin_connect.entries[0]['uidNumber']
-            uid = search_input
-
-
-    return User(str(unum), str(uid), is_admin)
-
-@login_manager.user_loader
-def load_user(user_id):
-    print(user_id)
-    return get_user_info("uidNumber", user_id)
 
 # set any free network to given user
 # should this have some sort of distribution?
@@ -189,43 +151,9 @@ def handle_request(action):
 
 @app.route('/')
 def start():
-    return render_template('index.html')
+    return render_template('index.html',
+                           logged_in=current_user.is_authenticated)
 
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        # if already logged in:
-        #    return redirect{dashboard}
-        user = escape_filter_chars(request.form.get('username'))
-        password = escape_filter_chars(request.form.get('pswrd'))
-
-        # NEEDS CONTEXT MANAGER ##############
-        # Bind with the user's DN and password to authenticate
-        with Connection('giantest.local.com',
-                        user=f'uid={user},cn=users,cn=accounts,dc=local,dc=com',
-                        password=password) as connection:
-            if connection.bind():
-                print(f"User {user} authenticated successfully.")
-                # search for users member info
-                login_user(get_user_info("uid", user))
-
-                return redirect(url_for('build_home'))
-            else:
-                # flash user saying bad auth
-                return render_template('login.html')
-    else:
-        return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    if current_user.is_authenticated:
-        logout_user()
-    return redirect(url_for('start'))
-
-@login_manager.unauthorized_handler
-def unauthorized_callback():
-    return redirect(url_for('start'))
 
 @app.route('/home', methods=['PATCH'])
 @login_required
@@ -302,7 +230,6 @@ def build_home():
                                 order by 1''')
                 avail_networks = cur.fetchall()
 
-
             return render_template('home.html',
                                    column1_values=avail_users,
                                    column2_values=avail_networks,
@@ -313,6 +240,84 @@ def build_home():
     except Exception as e:
         return render_template('error.html',
                                msg='An error occurred: ' + str(e))
+
+
+# takes either 'uid' & a user_id(loughr95)
+# or 'uidNumber' & a uidNumber (0888205)
+# returns User object for login functionality
+def get_user_info(search_on, search_input):
+    if search_on == "uid":
+        search_request = "uidNumber"
+        on_key = False
+    elif search_on == "uidNumber":
+        search_request = "uid"
+        on_key = True
+    else:
+        return None
+
+    with Connection('giantest.local.com',
+                    user='uid=admin,cn=users,cn=accounts,dc=local,dc=com',
+                    password='b' * 8) as admin_connect:
+        admin_connect.bind()
+
+        search_base = 'cn=users,cn=accounts,dc=local,dc=com'
+        search_filter = f'(&(objectclass=person)({search_on}={search_input}))'
+        admin_connect.search(search_base, search_filter, attributes=['memberOf', search_request])
+
+        is_admin = 'cn=admins,cn=groups,cn=accounts,dc=local,dc=com' in admin_connect.entries[0]['memberOf']
+
+        if on_key:
+            unum = search_input
+            uid = admin_connect.entries[0]['uid']
+        else:
+            unum = admin_connect.entries[0]['uidNumber']
+            uid = search_input
+
+    return User(str(unum), str(uid), is_admin)
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        # if already logged in:
+        #    return redirect{dashboard}
+        user = escape_filter_chars(request.form.get('username'))
+        password = escape_filter_chars(request.form.get('pswrd'))
+
+        # NEEDS CONTEXT MANAGER ##############
+        # Bind with the user's DN and password to authenticate
+        with Connection('giantest.local.com',
+                        user=f'uid={user},cn=users,cn=accounts,dc=local,dc=com',
+                        password=password) as connection:
+            if connection.bind():
+                print(f"User {user} authenticated successfully.")
+                # search for users member info
+                login_user(get_user_info("uid", user))
+
+                return redirect(url_for('build_home'))
+            else:
+                # flash user saying bad auth
+                return render_template('login.html')
+    else:
+        return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    if current_user.is_authenticated:
+        logout_user()
+    return redirect(url_for('start'))
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    print(user_id)
+    return get_user_info("uidNumber", user_id)
+
+
+@login_manager.unauthorized_handler
+def unauthorized_callback():
+    return redirect(url_for('start'))
 
 
 # for development run it on local in debug mode

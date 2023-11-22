@@ -8,10 +8,13 @@
 <body>
     <h1>Resource Locking</h1>
 
-        <a href="/login">Login</a></li>
+        {%  if logged_in %}
+            <a href="/logout">Logout</a></li>
+        {%  else %}
+            <a href="/login">Login</a></li>
 
-    
-    
+        {%  endif %}
+
     <h2> Project description </h2> 
     
         <p> Made during 2023 Fall

@@ -278,6 +278,8 @@ def get_user_info(search_on, search_input):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('build_home'))
     if request.method == 'POST':
         # if already logged in:
         #    return redirect{dashboard}

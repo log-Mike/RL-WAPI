@@ -10,3 +10,5 @@
 **/slnx.sqlite
 **/VSWorkspaceState.json
 **/.vs
+**/test.py
+**/.idea

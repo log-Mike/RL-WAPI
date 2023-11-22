@@ -1,8 +1,36 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html>
+<head>
+   <title>Resource {% if is_admin %} Allocate {% else %} View {% endif %}</title>
+   <link rel="stylesheet" href="{{ url_for('static', filename='css/tables_pretty.css') }}">
+</head>
+<body>
+   <!-- Left column for the table -->
+   <div class="table-container">
+      <table>
+         <thead>
+            <tr>
+               {% for col in columns %}
+               <th>{{ col }}</th>
+               {% endfor %}
+            </tr>
+         </thead>
+         <tbody>
+            {% for row in data %}
+            <tr>
+               <!-- Loop through row values to populate table cells -->
+               {% for value in row %}
+               <td>{{ value }}</td>
+               {% endfor %}
+            </tr>
+            {% endfor %}
+         </tbody>
+      </table>
+   </div>
+</body>
+</html>
 
-{% block title %}Update Assignments{% endblock %}
-
-{% block additional_content %}
+{% if is_admin %}
    <!-- Right column for the form selection -->
    <div class="form-container">
       <h1>Assign or drop user from network</h1>
@@ -25,4 +53,4 @@
       </form>
    </div>
    <script src="{{ url_for('static', filename='js/update_table.js') }}"></script>
-{% endblock %}
+{% endif %}

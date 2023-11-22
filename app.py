@@ -70,41 +70,10 @@ def get_user_info(search_on, search_input):
 
     return User(str(unum), str(uid), is_admin)
 
-@login_manager.unauthorized_handler
-def unauthorized():
-    pass
-
 @login_manager.user_loader
 def load_user(user_id):
     print(user_id)
     return get_user_info("uidNumber", user_id)
-
-
-def get_table_and_columns(cur):
-    try:
-        cur.execute(f'''select name, coalesce(user, "{app.config["NO_USER_MSG"]}"),
-                case
-                    when timestampdiff(second, date_updated, now()) < 60 then
-                        concat(timestampdiff(second, date_updated, now()), ' seconds ago')
-                    when timestampdiff(minute, date_updated, now()) < 60 then
-                        concat(timestampdiff(minute, date_updated, now()), ' minutes ago')
-                    when timestampdiff(hour, date_updated, now()) < 24 then
-                        concat(
-                            timestampdiff(hour, date_updated, now()),
-                            ' hours ',
-                            timestampdiff(minute, date_updated, now()) % 60,
-                            ' minutes ago'
-                        )
-                    else date_format(date_updated, '%m/%d/%y %h:%i %p')
-                end
-            from network
-            order by 1''')
-
-        return cur.fetchall(), ('Network', 'Assigned User', 'Last updated')
-
-    except Exception as e:
-        raise e
-
 
 # set any free network to given user
 # should this have some sort of distribution?
@@ -261,7 +230,7 @@ def unauthorized_callback():
 @app.route('/home', methods=['PATCH'])
 @login_required
 def handle_update():
-    if request.method == 'PATCH':
+    if current_user.is_admin and request.method == 'PATCH':
         user = request.form.get('user')
         network = request.form.get('network')
 
@@ -299,23 +268,47 @@ def build_home():
         with db.connection.cursor() as cur:
 
             # for dropdowns
-            cur.execute('''select username
+            cur.execute(f'''select name, coalesce(user, "{app.config["NO_USER_MSG"]}"),
+                    case
+                        when timestampdiff(second, date_updated, now()) < 60 then
+                            concat(timestampdiff(second, date_updated, now()), ' seconds ago')
+                        when timestampdiff(minute, date_updated, now()) < 60 then
+                            concat(timestampdiff(minute, date_updated, now()), ' minutes ago')
+                        when timestampdiff(hour, date_updated, now()) < 24 then
+                            concat(
+                                timestampdiff(hour, date_updated, now()),
+                                ' hours ',
+                                timestampdiff(minute, date_updated, now()) % 60,
+                                ' minutes ago'
+                            )
+                        else date_format(date_updated, '%m/%d/%y %h:%i %p')
+                    end
+                from network
+                order by 1''')
+
+            table, cols = cur.fetchall(), ('Network', 'Assigned User', 'Last updated')
+
+            avail_users, avail_networks = None, None
+
+            # only get columns for an admin
+            if current_user.is_admin:
+                cur.execute('''select username
                                 from userInfo
                                 order by 1''')
-            avail_users = cur.fetchall()
+                avail_users = cur.fetchall()
 
-            cur.execute('''select name
+                cur.execute('''select name
                                 from network
                                 order by 1''')
-            avail_networks = cur.fetchall()
+                avail_networks = cur.fetchall()
 
-            table, cols = get_table_and_columns(cur)
 
-            return render_template('select.html',
+            return render_template('home.html',
                                    column1_values=avail_users,
                                    column2_values=avail_networks,
                                    data=table,
-                                   columns=cols)
+                                   columns=cols,
+                                   isadmin=current_user.is_admin)
 
     except Exception as e:
         return render_template('error.html',

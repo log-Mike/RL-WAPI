@@ -235,7 +235,7 @@ def build_home():
                                    column2_values=avail_networks,
                                    data=table,
                                    columns=cols,
-                                   isadmin=current_user.is_admin)
+                                   is_admin=current_user.is_admin)
 
     except Exception as e:
         return render_template('error.html',

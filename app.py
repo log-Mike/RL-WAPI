@@ -48,7 +48,8 @@ def lock(cur, user):
     # & not SQL ?
     found = cur.execute('''select 0
                             from userInfo
-                            where username = %s''', (user,))
+                            where username = %s
+                            for update''', (user,))
 
     if found == 0:
         result = '4 - No matching user'
@@ -188,7 +189,6 @@ def handle_update():
                 'error': 'An error occurred: ' + str(e)
             })
 
-
 @app.route('/home')
 @login_required
 def build_home():
@@ -196,28 +196,12 @@ def build_home():
         with db.connection.cursor() as cur:
 
             # for dropdowns
-            cur.execute(f'''select name, coalesce(user, "{app.config["NO_USER_MSG"]}"),
-                    case
-                        when timestampdiff(second, date_updated, now()) < 60 then
-                            concat(timestampdiff(second, date_updated, now()), ' seconds ago')
-                        when timestampdiff(minute, date_updated, now()) < 60 then
-                            concat(timestampdiff(minute, date_updated, now()), ' minutes ago')
-                        when timestampdiff(hour, date_updated, now()) < 24 then
-                            concat(
-                                timestampdiff(hour, date_updated, now()),
-                                ' hours ',
-                                timestampdiff(minute, date_updated, now()) % 60,
-                                ' minutes ago'
-                            )
-                        else date_format(date_updated, '%m/%d/%y %h:%i %p')
-                    end
-                from network
-                order by 1''')
+            cur.callproc('get_network_data', [app.config['NO_USER_MSG']])
 
-            table, cols = cur.fetchall(), ('Network', 'Assigned User', 'Last updated')
+            table = cur.fetchall()
+            cols = [column[0] for column in cur.description]
 
             avail_users, avail_networks = None, None
-
             # only get columns for an admin
             if current_user.is_admin:
                 cur.execute('''select username
@@ -240,7 +224,6 @@ def build_home():
     except Exception as e:
         return render_template('error.html',
                                msg='An error occurred: ' + str(e))
-
 
 # takes either 'uid' & a user_id(loughr95)
 # or 'uidNumber' & a uidNumber (0888205)

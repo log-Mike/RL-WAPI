@@ -111,7 +111,7 @@ You should now be able to access the web app at http://localhost:5000 , defaulte
 
     5 - Multiple records found matching given input (network/user)
 
-    6 - No free networks available
+    6 - Problem locking: No free networks available
 
-    7 - Problem unlocking, a free network was found but when went to lock, was not free
+    7 - Problem locking: a free network was found but when went to lock, was not free
 

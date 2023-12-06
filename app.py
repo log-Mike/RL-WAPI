@@ -30,6 +30,8 @@ except FileNotFoundError as e:
         ''')
 
 app.config['NO_USER_MSG'] = 'User not assigned'
+app.config['NO_RECORDS_MSG'] = '4 - No matching records found'
+app.config['MULTI_RECORD_MSG'] = '5 - Multiple records found'
 
 db = MySQL(app)
 
@@ -51,10 +53,9 @@ def lock(cur, user):
                             where username = %s
                             for update''', (user,))
 
+    # continue even if identical multiple users are found
     if found == 0:
-        result = '4 - No matching user'
-    elif found != 1:
-        result = '5 - More than one matching user record found'
+        result = app.config['NO_RECORDS_MSG']
     else:
         found = cur.execute('''select name
                                 from network
@@ -71,7 +72,7 @@ def lock(cur, user):
                                     where name = %s ''', (user, picked))
 
             if found != 1:
-                result = '7 - problem updating db'
+                result = '7 - problem updating db, found a free network but when went to lock, was not free'
             else:
                 result = f'{user} locked to {picked}'
                 db.connection.commit()
@@ -86,9 +87,9 @@ def unlock(cur, network):
                             where name = %s''', (network,))
 
     if found == 0:
-        result = '8 - No matching network found'
+        result = app.config['NO_RECORDS_MSG']
     elif found != 1:
-        result = '9 - More than one matching network found, update transaction rollbacked'
+        result = app.config['MULTI_RECORD_MSG']
     else:
         result = f'{network} unlocked'
         db.connection.commit()
@@ -103,15 +104,15 @@ def checklock(cur, network):
                             where name = %s''', (network,))
 
     if found == 0:
-        result = '10 - No matching row found'
+        result = app.config['NO_RECORDS_MSG'] 
     elif found != 1:
-        result = '11 - More than one record found in db matching the network name'
+        result = app.config['MULTI_RECORD_MSG']
     else:
         assigned_user = cur.fetchone()[0]
 
-        result = 'unlocked' if assigned_user is None else f'locked by {assigned_user}'
+        result = 'unlocked' if assigned_user is None else assigned_user
 
-    return f'{network} is {result}'
+    return result
 
 
 # result is currently just want happened. need to
@@ -121,14 +122,14 @@ def handle_request(action):
     api_key = request.headers.get('API-KEY')
 
     if not api_key == app.config['API_KEY']:
-        return 'bad api key'
+        return '1 - Wrong API key'
 
     try:
         param = request.args.get('input')
         try:
             with db.connection.cursor() as cur:
                 method = request.method
-                err_msg = '12 - request and action not recognized'
+                err_msg = '3 - action not recognized'
 
                 if method == 'PATCH':
                     if action == 'lock':
@@ -264,12 +265,9 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('build_home'))
     if request.method == 'POST':
-        # if already logged in:
-        #    return redirect{dashboard}
         user = escape_filter_chars(request.form.get('username'))
         password = escape_filter_chars(request.form.get('pswrd'))
 
-        # NEEDS CONTEXT MANAGER ##############
         # Bind with the user's DN and password to authenticate
         with Connection('giantest.local.com',
                         user=f'uid={user},cn=users,cn=accounts,dc=local,dc=com',

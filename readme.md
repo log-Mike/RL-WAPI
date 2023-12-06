@@ -97,34 +97,21 @@ You should now be able to access the web app at http://localhost:5000 , defaulte
 
 - For default installation, press enter for all except the question ending in "config from these settings?", type yes
 
-# Exit Codes
-- Bash
+# Exit codes for client.sh
 
-    0 = Successful
+    0 -  Successful
 
-    1 = API_KEY is not set. Please set the API_KEY environment variable
+    1 - Problem with API Key
 
-    2 = Usage: $0 lock/checklock/unlock user/network/network
+    2 - Bad parameters
 
-    3 = Not an action
+    3 - Not an action (checklock/lock/unlock)
 
+    4 - Couldn't find given input (network/user)
 
- - Python
+    5 - Multiple records found matching given input (network/user)
 
-    4 = No matching user
+    6 - No free networks available
 
-    5 = More than one matching user record found
+    7 - Problem unlocking, a free network was found but when went to lock, was not free
 
-    6 = No free networks
-
-    7 = Problem Updating Database
-
-    8 = No matching network found
-
-    9 = More than one matching network found, update transaction rollbacked
-
-    10 = No matching row found
-
-    11 = More than one record found in db matching the network name
-
-    12 = Request and action not recognized

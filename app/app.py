@@ -30,13 +30,14 @@ except FileNotFoundError as e:
         ''')
 
 app.config['NO_USER_MSG'] = 'User not assigned'
-app.config['NO_RECORDS_MSG'] = '4 - No matching records found'
-app.config['MULTI_RECORD_MSG'] = '5 - Multiple records found'
+app.config['NO_RECORDS_MSG'] = '5 - No matching records found'
+app.config['MULTI_RECORD_MSG'] = '6 - Multiple records found'
 
 db = MySQL(app)
 
 login_manager = LoginManager(app)
 login_manager.session_protection = 'strong'
+
 
 
 # set any free network to given user
@@ -52,7 +53,7 @@ def lock(cur, user):
                             from userInfo
                             where username = %s
                             for update''', (user,))
-
+    
     # continue even if identical multiple users are found
     if found == 0:
         result = app.config['NO_RECORDS_MSG']
@@ -64,7 +65,7 @@ def lock(cur, user):
 
         # found no networks with a null user
         if found == 0:
-            result = '6 - No free networks'
+            result = '7 - No free networks'
         else:
             picked = cur.fetchone()[0]
             found = cur.execute('''update network
@@ -72,9 +73,9 @@ def lock(cur, user):
                                     where name = %s ''', (user, picked))
 
             if found != 1:
-                result = '7 - problem updating db, found a free network but when went to lock, was not free'
+                result = '8 - problem updating db, found a free network but when went to lock, was not free'
             else:
-                result = f'{user} locked to {picked}'
+                result = f'0 - {picked}'
                 db.connection.commit()
 
     return result
@@ -91,7 +92,7 @@ def unlock(cur, network):
     elif found != 1:
         result = app.config['MULTI_RECORD_MSG']
     else:
-        result = f'{network} unlocked'
+        result = '0 - unlocked'
         db.connection.commit()
 
     return result
@@ -110,8 +111,8 @@ def checklock(cur, network):
     else:
         assigned_user = cur.fetchone()[0]
 
-        result = 'unlocked' if assigned_user is None else assigned_user
-
+        result = '0 - ' + ('unlocked' if assigned_user is None else assigned_user)
+                           
     return result
 
 
@@ -129,7 +130,7 @@ def handle_request(action):
         try:
             with db.connection.cursor() as cur:
                 method = request.method
-                err_msg = '3 - action not recognized'
+                err_msg = '4 - action/method not recognized'
 
                 if method == 'PATCH':
                     if action == 'lock':

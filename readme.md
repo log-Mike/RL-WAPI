@@ -99,19 +99,22 @@ You should now be able to access the web app at http://localhost:5000 , defaulte
 
 # Exit codes for client.sh
 
-    0 -  Successful
+    0 - Successful
 
     1 - Problem with API Key
+    
+    2 - Problem connecting to API
 
-    2 - Bad parameters
+    3 - Bad parameters
 
-    3 - Not an action (checklock/lock/unlock)
+    4 - Not an action (checklock/lock/unlock)
 
-    4 - Couldn't find given input (network/user)
+    5 - Couldn't find given input (network/user)
 
-    5 - Multiple records found matching given input (network/user)
+    6 - Multiple records found matching given input (network/user)
 
-    6 - Problem locking: No free networks available
+    7 - No free networks available
 
-    7 - Problem locking: a free network was found but when went to lock, was not free
-
+    8 - Problem while locking: a free network was found but when went to lock, was not free
+    
+    9 - Other, unexpected error

@@ -1,15 +1,17 @@
 {% extends 'base.html' %}
 {% block head %}
-   <link rel="stylesheet" href="{{ url_for('static', filename='css/tables.css') }}">
+   <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
 {% endblock %}
 {% block body %}
-   <!-- Left column for the table -->
-   <div class="table-container">
-      <table>
+<body>
+
+
+    <div class="table-container">
+      <table class="table table-striped table-dark table-hover">
          <thead>
             <tr>
                {% for col in columns %}
-               <th>{{ col }}</th>
+               <th scope="col">{{ col }}</th>
                {% endfor %}
             </tr>
          </thead>
@@ -24,13 +26,26 @@
             {% endfor %}
          </tbody>
       </table>
-   </div>
-
+    <a href="/logout" class="logout-button"> Sign out </a>
+    <style>
+        .logout-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: rgb(90, 112, 203);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+    </div>
 {% if is_admin %}
    <!-- Right column for the form selection -->
    <div class="form-container">
       <h1>Assign or drop user from network</h1>
-      <form method="PATCH" action="/home">
+      <form method="PATCH" action="/handle-update">
          <label for="column1">User</label>
          <select name="user" id="column1">
             <option value="DEL_USER">Remove assigned user</option>
@@ -38,19 +53,22 @@
             <option value="{{ value[0] }}">{{ value[0] }}</option>
             {% endfor %}
          </select>
+      <br>
          <label for="column2">Network</label>
          <select name="network" id="column2">
             {% for value in column2_values %}
             <option value="{{ value[0] }}">{{ value[0] }}</option>
             {% endfor %}
          </select>
-         <br>
+      <br>
+      <br>
          <input type="submit" value="Submit">
       </form>
    </div>
    <script src="{{ url_for('static', filename='js/update_table.js') }}"></script>
 {% endif %}
 
-<a href="/logout">Logout</a>
 
+
+</body>
 {% endblock %}

@@ -1,9 +1,10 @@
-from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
+from flask import Flask, jsonify, redirect, render_template, request, url_for
 from flask_login import LoginManager, login_user, logout_user, current_user, login_required
 from flask_mysqldb import MySQL
 from ldap3 import Connection
-from ldap3.core.exceptions import LDAPBindError
+from ldap3.core.exceptions import LDAPBindError, LDAPPasswordIsMandatoryError, LDAPSocketOpenError
 from ldap3.utils.conv import escape_filter_chars
+
 from user import User
 
 app = Flask(__name__)
@@ -58,8 +59,6 @@ login_manager.session_protection = 'strong'
 # to be assigned to a network
 def lock(cur, user):
     # verifying existence
-    # this should be from LDAP
-    # & not SQL ?
     found = cur.execute('''select 0
                             from userInfo
                             where username = %s
@@ -93,17 +92,25 @@ def lock(cur, user):
 
 # set given network's user to null
 def unlock(cur, network):
-    found = cur.execute('''update network
-                            set user = NULL
-                            where name = %s''', (network,))
-
+    found = cur.execute('''select 0
+                            from network
+                            where name = %s
+                            for update''', (network,))
     if found == 0:
         result = app.config['NO_RECORDS_MSG']
     elif found != 1:
         result = app.config['MULTI_RECORD_MSG']
     else:
-        result = '0 - unlocked'
-        db.connection.commit()
+
+        found = cur.execute('''update network
+                                set user = NULL
+                                where name = %s''', (network,))
+
+        if found == 0:
+            result = '9 - network already unlocked'
+        else:
+            result = '0 - unlocked'
+            db.connection.commit()
 
     return result
 
@@ -155,13 +162,7 @@ def handle_request(action):
     return result
 
 
-@app.route('/')
-def start():
-    return render_template('index.html',
-                           logged_in=current_user.is_authenticated)
-
-
-@app.route('/home', methods=['PATCH'])
+@app.patch('/handle-update')
 @login_required
 def handle_update():
     if current_user.is_admin and request.method == 'PATCH':
@@ -190,7 +191,7 @@ def handle_update():
             })
 
 
-@app.route('/home')
+@app.get('/home')
 @login_required
 def build_home():
     with db.connection.cursor() as cur:
@@ -254,30 +255,39 @@ def get_user_info(search_on, search_input):
     return User(str(unum), str(uid), is_admin)
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
+@app.get('/')
+def start():
     if current_user.is_authenticated:
         return redirect(url_for('build_home'))
+    return render_template('login.html')
+
+
+@app.post('/login')
+def login():
+    if not current_user.is_authenticated:
+        user = escape_filter_chars(request.form.get('username'))
+        password = escape_filter_chars(request.form.get('password'))
+
+        try:
+            with Connection(app.config['LDAP_HOST'],
+                            user=f'uid={user},{app.config["LDAP_USERS_PATH"]}',
+                            password=password) as connection:
+
+                login_user(get_user_info("uid", user))
+                return jsonify({'success': True})
+
+        except (LDAPBindError, LDAPPasswordIsMandatoryError):
+            message = 'Invalid username or password'
+            return jsonify({'success': False, 'message': message})
+
+        except LDAPSocketOpenError as err:
+            message = 'fFatal response from server: {str(err)}'
+            return jsonify({'success': False, 'message': message})
     else:
-        if request.method == 'POST':
-            user = escape_filter_chars(request.form.get('username'))
-            password = escape_filter_chars(request.form.get('password'))
-
-            try:
-                with Connection(app.config['LDAP_HOST'],
-                                user=f'uid={user},{app.config["LDAP_USERS_PATH"]}',
-                                password=password) as connection:
-                    login_user(get_user_info("uid", user))
-
-                    return redirect(url_for('build_home'))
-            except LDAPBindError:
-                flash('Invalid username or password', 'error')
-                return render_template('login.html')
-        else:
-            return render_template('login.html')
+        return jsonify({'success': False, 'message': 'User is already authenticated'})
 
 
-@app.route('/logout')
+@app.get('/logout')
 def logout():
     if current_user.is_authenticated:
         logout_user()

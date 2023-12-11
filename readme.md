@@ -125,4 +125,4 @@ You should now be able to access the web app at http://localhost:5000 , defaulte
 
     8 - Problem while locking: a free network was found but when went to lock, was not free
     
-    9 - Other, unexpected error
+    9 - Problem while unlocking: network already unlocked

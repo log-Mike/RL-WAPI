@@ -1,35 +1,33 @@
 {% extends 'base.html' %}
-{% block title %}  Resource Locking Login {% endblock %}
 
 {% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <title>Resource Locking Login</title>
 {% endblock %}
 
 {% block body %}
-<div class="mainimage col-6">
-        <img src="{{ url_for('static', filename='images/Lockheed_Martin_logo.svg.png') }}"
-             alt="Lockheed Martin Logo" width="400">
-</div>
 
-    <div class="centercontainer col-6">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="alert alert-danger">
-                    {{ messages[0][1] }}
-                </div>
-            {% endif %}
-        {% endwith %}
+<body class="d-flex align-items-center py-4 bg-body-tertiary">
+    <main class="form-signin w-100 m-auto">
+        <form id="login-form" method="POST" action="/login">
 
-        <form method="POST" action="/login">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username"
-            placeholder="Enter username" required=""
-            autocomplete="on">
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password"
-            placeholder="Enter password" required=""
-            autocomplete="on">
-            <button type="submit">Login</button>
+            <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+
+            <div class="form-floating">
+                <input type="username" class="form-control" name="username" placeholder="name@example.com">
+                <label for="floatingInput">Username</label>
+            </div>
+            <div class="form-floating">
+                <input type="password" class="form-control" name="password" placeholder="Password">
+                <label for="floatingPassword">Password</label>
+            </div>
+
+            <button class="btn btn-primary w-100 py-2" type="button" onclick="submitForm()">Sign in</button>
         </form>
-    </div>
+    </main>
+
+<script src="{{ url_for('static', filename='js/submit_login.js') }}"></script>
+
+</body>
 {% endblock %}

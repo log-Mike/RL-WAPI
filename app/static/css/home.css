@@ -1,43 +1,29 @@
-/* this is just an example CSS page, please
-    replace in html pages with our own styling */
-      /* Define a two-column layout using CSS flexbox */
+ /* Define a two-column layout using CSS flexbox */
       body {
          display: flex;
       }
       .table-container {
          flex: 1;
          padding: 10px;
-         background-color: #f2f2f2;
       }
       .form-container {
          flex: 1;
          padding: 10px;
-         background-color: #e0e0e0;
          border-radius: 5px;
       }
       table {
          width: 100%;
          border-collapse: collapse;
-         background-color: #fff;
       }
       table th, table td {
-         border: 1px solid #ccc;
          padding: 8px;
          text-align: left;
-      }
-      table th {
-         background-color: #333;
-         color: #fff;
-      }
-      table tr:nth-child(even) {
-         background-color: #f2f2f2;
       }
       form {
          margin-top: 20px;
       }
       h1 {
          font-size: 24px;
-         color: #333;
       }
       label, select {
          display: block;

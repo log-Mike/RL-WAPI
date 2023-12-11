@@ -1,49 +1,25 @@
+html,
 body {
-    display: block;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    position: relative;
-    width: 600px;
-    top: 30vh;
-    left: 40vw;
-    overflow: hidden;
+  height: 100%;
 }
 
-.mainimage {
-    position: relative;
-    left: -5%;
-    top: -5.5%;
+.form-signin {
+  max-width: 330px;
+  padding: 1rem;
 }
 
-.centercontainer {
-    background-color: #e0e0e0;
-    border-radius: 5px;
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 20px;
-    padding-top: 20px;
+.form-signin .form-floating:focus-within {
+  z-index: 2;
 }
 
-label, input, button {
-    display: block;
-    margin-bottom: 10px;
+.form-signin input[type="username"] {
+  margin-bottom: -1px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
-input[type="text"], input[type="password"] {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-}
-
-button {
-    width: 100%;
-    padding: 8px;
-    background-color: #003e69;
-    color: #fff;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
+.form-signin input[type="password"] {
+  margin-bottom: 10px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }

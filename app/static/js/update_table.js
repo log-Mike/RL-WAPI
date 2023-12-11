@@ -9,8 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const user = userSelect.value;
         const network = networkSelect.value.toLowerCase();
 
-        // Make an AJAX PATCH request to update the record
-        fetch("/home", {
+        fetch("/handle-update", {
             method: "PATCH",
             body: new URLSearchParams({ user, network }),
             headers: { "Content-Type": "application/x-www-form-urlencoded" }
@@ -47,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         const network = tableBody.rows[mid].cells[0].textContent.toLowerCase();
                         if (network === data.network) {
                             // make the update
-                            if (tableBody.rows[mid].cells[1].textContent != data.user){
+                            if (tableBody.rows[mid].cells[1].textContent !== data.user){
                                 tableBody.rows[mid].cells[1].textContent = data.user;
                                 tableBody.rows[mid].cells[2].textContent = 'Just now';
                                 updated = true;

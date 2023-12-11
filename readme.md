@@ -93,7 +93,7 @@ You should now be able to access the web app at http://localhost:5000 , defaulte
 	`./client.sh lock network`
 
 # LDAP Server
-- Cnonects to a LDAP server
+- Connects to a LDAP server
 
 - To test locally for free, launch an OS capable of hosting FreeIPA (such as [the lastest Fedora release](https://fedoraproject.org/workstation/download))
 

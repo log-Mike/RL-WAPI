@@ -38,11 +38,5 @@ IFS='-' read -r exit_code message <<< "$api_output"
 
 message="$(echo "${message}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 
-# if not only numeric
-if [[ ! $exit_code =~ ^[0-9]+$ ]]; then
-    echo $api_output
-    exit 9
-fi
-
 echo $message
 exit $exit_code

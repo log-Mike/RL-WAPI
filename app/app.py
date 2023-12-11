@@ -1,9 +1,9 @@
-from flask import Flask, jsonify, redirect, render_template, request, url_for
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
+from flask_login import LoginManager, login_user, logout_user, current_user, login_required
 from flask_mysqldb import MySQL
 from ldap3 import Connection
+from ldap3.core.exceptions import LDAPBindError
 from ldap3.utils.conv import escape_filter_chars
-
 from user import User
 
 app = Flask(__name__)
@@ -28,6 +28,7 @@ except FileNotFoundError as e:
 
         LDAP_HOST = "example.local.com"
         LDAP_USERS_PATH = "cn=users,cn=accounts,dc=local,dc=com"
+        LDAP_ADMINS_PATH = 'cn=admins,cn=groups,cn=accounts,dc=local,dc=com'
 
         # This might need to be admin depending on the setup
         LDAP_USER = "ldap_sign_in"
@@ -50,7 +51,6 @@ login_manager = LoginManager(app)
 login_manager.session_protection = 'strong'
 
 
-
 # set any free network to given user
 # should this have some sort of distribution?
 # assumes a user has to be in user table
@@ -64,7 +64,7 @@ def lock(cur, user):
                             from userInfo
                             where username = %s
                             for update''', (user,))
-    
+
     # continue even if identical multiple users are found
     if found == 0:
         result = app.config['NO_RECORDS_MSG']
@@ -79,7 +79,9 @@ def lock(cur, user):
             result = '7 - No free networks'
         else:
             picked = cur.fetchone()[0]
-            found = cur.callproc('set_network_user', [picked, user])
+            found = cur.execute('''update network
+                                    set user = %s
+                                    where name = %s ''', (user, picked))
             if found != 1:
                 result = '8 - problem updating db, found a free network but when went to lock, was not free'
             else:
@@ -113,14 +115,14 @@ def checklock(cur, network):
                             where name = %s''', (network,))
 
     if found == 0:
-        result = app.config['NO_RECORDS_MSG'] 
+        result = app.config['NO_RECORDS_MSG']
     elif found != 1:
         result = app.config['MULTI_RECORD_MSG']
     else:
         assigned_user = cur.fetchone()[0]
 
         result = '0 - ' + ('unlocked' if assigned_user is None else assigned_user)
-                           
+
     return result
 
 
@@ -133,30 +135,23 @@ def handle_request(action):
     if not api_key == app.config['API_KEY']:
         return '1 - Wrong API key'
 
-    try:
-        param = request.args.get('input')
-        try:
-            with db.connection.cursor() as cur:
-                method = request.method
-                err_msg = '4 - action/method not recognized'
+    param = request.args.get('input')
 
-                if method == 'PATCH':
-                    if action == 'lock':
-                        result = lock(cur, param)
-                    elif action == 'unlock':
-                        result = unlock(cur, param)
-                    else:
-                        result = err_msg
-                elif method == 'GET' and action == 'checklock':
-                    result = checklock(cur, param)
-                else:
-                    result = err_msg
+    with db.connection.cursor() as cur:
+        method = request.method
+        err_msg = '4 - action/method not recognized'
 
-        except Exception as e:
-            return str(e)
-    except Exception as e:
-        return str(e)
-
+        if method == 'PATCH':
+            if action == 'lock':
+                result = lock(cur, param)
+            elif action == 'unlock':
+                result = unlock(cur, param)
+            else:
+                result = err_msg
+        elif method == 'GET' and action == 'checklock':
+            result = checklock(cur, param)
+        else:
+            result = err_msg
     return result
 
 
@@ -173,67 +168,58 @@ def handle_update():
         user = request.form.get('user')
         network = request.form.get('network')
 
-        try:
-            with db.connection.cursor() as cur:
-                if user == 'DEL_USER':
-                    set_to = None
-                    update_to = app.config['NO_USER_MSG']
-                else:
-                    set_to = user
-                    update_to = user
+        with db.connection.cursor() as cur:
+            if user == 'DEL_USER':
+                set_to = None
+                update_to = app.config['NO_USER_MSG']
+            else:
+                set_to = user
+                update_to = user
 
-                num_updated = cur.execute('''update network
+            num_updated = cur.execute('''update network
                                             set user=%s
                                             where name=%s''', (set_to, network))
 
-                if num_updated == 1:
-                    db.connection.commit()
+            if num_updated == 1:
+                db.connection.commit()
 
-                return jsonify({
-                    'num_updated': num_updated,
-                    'network': network,
-                    'user': update_to
-                })
-        except Exception as e:
             return jsonify({
-                'error': 'An error occurred: ' + str(e)
+                'num_updated': num_updated,
+                'network': network,
+                'user': update_to
             })
+
 
 @app.route('/home')
 @login_required
 def build_home():
-    try:
-        with db.connection.cursor() as cur:
+    with db.connection.cursor() as cur:
+        # for dropdowns
+        cur.callproc('get_network_data', [app.config['NO_USER_MSG']])
 
-            # for dropdowns
-            cur.callproc('get_network_data', [app.config['NO_USER_MSG']])
+        table = cur.fetchall()
+        cols = [column[0] for column in cur.description]
 
-            table = cur.fetchall()
-            cols = [column[0] for column in cur.description]
-
-            avail_users, avail_networks = None, None
-            # only get columns for an admin
-            if current_user.is_admin:
-                cur.execute('''select username
+        avail_users, avail_networks = None, None
+        # only get columns for an admin
+        if current_user.is_admin:
+            cur.execute('''select username
                                 from userInfo
                                 order by 1''')
-                avail_users = cur.fetchall()
+            avail_users = cur.fetchall()
 
-                cur.execute('''select name
+            cur.execute('''select name
                                 from network
                                 order by 1''')
-                avail_networks = cur.fetchall()
+            avail_networks = cur.fetchall()
 
-            return render_template('home.html',
-                                   column1_values=avail_users,
-                                   column2_values=avail_networks,
-                                   data=table,
-                                   columns=cols,
-                                   is_admin=current_user.is_admin)
+        return render_template('home.html',
+                               column1_values=avail_users,
+                               column2_values=avail_networks,
+                               data=table,
+                               columns=cols,
+                               is_admin=current_user.is_admin)
 
-    except Exception as e:
-        return render_template('error.html',
-                               msg='An error occurred: ' + str(e))
 
 # takes either 'uid' & a user_id(loughr95)
 # or 'uidNumber' & a uidNumber (0888205)
@@ -256,7 +242,7 @@ def get_user_info(search_on, search_input):
         search_filter = f'(&(objectclass=person)({search_on}={search_input}))'
         admin_connect.search(app.config['LDAP_USERS_PATH'], search_filter, attributes=['memberOf', search_request])
 
-        is_admin = f'cn=admins,{app.config["LDAP_USERS_PATH"]}' in admin_connect.entries[0]['memberOf']
+        is_admin = app.config['LDAP_ADMINS_PATH'] in admin_connect.entries[0]['memberOf']
 
         if on_key:
             unum = search_input
@@ -272,23 +258,23 @@ def get_user_info(search_on, search_input):
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('build_home'))
-    if request.method == 'POST':
-        user = escape_filter_chars(request.form.get('username'))
-        password = escape_filter_chars(request.form.get('pswrd'))
-
-        # Bind with the user's DN and password to authenticate
-        with Connection(app.config['LDAP_HOST'],
-                        user=f'uid={user},{app.config["LDAP_USERS_PATH"]}',
-                        password=password) as connection:
-            if connection.bind():
-                login_user(get_user_info("uid", user))
-
-                return redirect(url_for('build_home'))
-            else:
-                # flash user saying bad auth
-                return render_template('login.html')
     else:
-        return render_template('login.html')
+        if request.method == 'POST':
+            user = escape_filter_chars(request.form.get('username'))
+            password = escape_filter_chars(request.form.get('password'))
+
+            try:
+                with Connection(app.config['LDAP_HOST'],
+                                user=f'uid={user},{app.config["LDAP_USERS_PATH"]}',
+                                password=password) as connection:
+                    login_user(get_user_info("uid", user))
+
+                    return redirect(url_for('build_home'))
+            except LDAPBindError:
+                flash('Invalid username or password', 'error')
+                return render_template('login.html')
+        else:
+            return render_template('login.html')
 
 
 @app.route('/logout')
@@ -300,7 +286,6 @@ def logout():
 
 @login_manager.user_loader
 def load_user(user_id):
-    print(user_id)
     return get_user_info("uidNumber", user_id)
 
 

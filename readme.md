@@ -8,13 +8,11 @@ Made during/for Rowan University Software Engineering Fall 2023 class. Developed
 
 # Team makeup:
 
+Michael Loughrin - Lead Developer
 
 Russell Bamberger - Product Owner 
 
 Phoenix Poitras - Scrum Master
-
-Michael Loughrin - Developer
-**<br/>**
 
 
 Victoria Bostick - Developer
@@ -47,26 +45,30 @@ Shauna Hurley - Developer
 
 	`pip install -r requirements.txt`
     
-- Set up the configuration file
+  - Set up the configuration file
 
-   `config.py`
+     `config.py`
    
-        should be a python file: config.py:
-        Note: port_number is an integer, keys can be generated using gen_key.py, ldap user might need to be admin dependant on setup
-        MYSQL_HOST = "sql_db_host"
-        MYSQL_USER = "sql_db_user"
-        MYSQL_PASSWORD = "sql_db_pwd"
-        MYSQL_DB = "sql_db_name"
-        MYSQL_PORT = {port_number}
+          should be a python file: config.py:
+          
+          MYSQL_HOST = "sql_db_host"
+          MYSQL_USER = "sql_db_user"
+          MYSQL_PASSWORD = "sql_db_pwd"
+          MYSQL_DB = "sql_db_name"
+          # Integer
+          MYSQL_PORT = {port_number}
         
-        API_KEY = "single_api_key"
-        SECRET_KEY = "secret_key"   
+          # gen_keys.py
+          API_KEY = "single_api_key"
+          SECRET_KEY = "secret_key"   
 
-        LDAP_HOST = "example.local.com"
-        LDAP_USERS_PATH = "cn=users,cn=accounts,dc=local,dc=com"
+          LDAP_HOST = "example.local.com"
+          LDAP_USERS_PATH = "cn=users,cn=accounts,dc=local,dc=com"
+          LDAP_ADMINS_PATH = 'cn=admins,cn=groups,cn=accounts,dc=local,dc=com'
 
-        LDAP_USER = "ldap_sign_in"
-        LDAP_PASSWORD = "ldap_password"
+          # might need admin depending on ldap config
+          LDAP_USER = "ldap_sign_in"
+          LDAP_PASSWORD = "ldap_password"
 
 
 

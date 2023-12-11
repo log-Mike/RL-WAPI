@@ -51,16 +51,24 @@ Shauna Hurley - Developer
 
    `config.py`
    
-        should be a python file: config.py with variables:
+        should be a python file: config.py:
+        Note: port_number is an integer, keys can be generated using gen_key.py, ldap user might need to be admin dependant on setup
         MYSQL_HOST = "sql_db_host"
         MYSQL_USER = "sql_db_user"
         MYSQL_PASSWORD = "sql_db_pwd"
         MYSQL_DB = "sql_db_name"
         MYSQL_PORT = {port_number}
         
-        # These can be generated using gen_key.py
         API_KEY = "single_api_key"
         SECRET_KEY = "secret_key"   
+
+        LDAP_HOST = "example.local.com"
+        LDAP_USERS_PATH = "cn=users,cn=accounts,dc=local,dc=com"
+
+        LDAP_USER = "ldap_sign_in"
+        LDAP_PASSWORD = "ldap_password"
+
+
 
 - Run the app
 
@@ -83,12 +91,10 @@ You should now be able to access the web app at http://localhost:5000 , defaulte
 	`./client.sh lock network`
 
 # LDAP Server
-- Current version conects to a LDAP server that is hosted on a local FreeIPA.
+- Cnonects to a LDAP server
 
-- To test locally, launch an OS capable of hosting FreeIPA (such as [the lastest Fedora release](https://fedoraproject.org/workstation/download))
+- To test locally for free, launch an OS capable of hosting FreeIPA (such as [the lastest Fedora release](https://fedoraproject.org/workstation/download))
 
-- Current version is hard set to a host name "giantest.local.com" mapped to the local IP (mapping is located in /etc/hosts)
-  
 - Resolve download issues, set up the server or client using:
 
 `sudo dnf install free-ipa client`

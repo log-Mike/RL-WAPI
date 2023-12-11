@@ -18,11 +18,22 @@ except FileNotFoundError as e:
         MYSQL_USER = "sql_db_user"
         MYSQL_PASSWORD = "sql_db_pwd"
         MYSQL_DB = "sql_db_name"
+
+        # integer
         MYSQL_PORT = {port_number}
         
         API_KEY = "single_api_key"
         SECRET_KEY = "secret_key"
         
+
+        LDAP_HOST = "example.local.com"
+        LDAP_USERS_PATH = "cn=users,cn=accounts,dc=local,dc=com"
+
+        # This might need to be admin depending on the setup
+        LDAP_USER = "ldap_sign_in"
+        LDAP_PASSWORD = "ldap_password"
+
+
         An API & a Secret key can be 
         generated with
         python gen_key.py secret
@@ -68,10 +79,7 @@ def lock(cur, user):
             result = '7 - No free networks'
         else:
             picked = cur.fetchone()[0]
-            found = cur.execute('''update network
-                                    set user = %s
-                                    where name = %s ''', (user, picked))
-
+            found = cur.callproc('set_network_user', [picked, user])
             if found != 1:
                 result = '8 - problem updating db, found a free network but when went to lock, was not free'
             else:
@@ -240,16 +248,15 @@ def get_user_info(search_on, search_input):
     else:
         return None
 
-    with Connection('giantest.local.com',
-                    user='uid=admin,cn=users,cn=accounts,dc=local,dc=com',
-                    password='b' * 8) as admin_connect:
+    with Connection(app.config['LDAP_HOST'],
+                    user=f'uid={app.config["LDAP_USER"]},{app.config["LDAP_USERS_PATH"]}',
+                    password=app.config["LDAP_PASSWORD"]) as admin_connect:
         admin_connect.bind()
 
-        search_base = 'cn=users,cn=accounts,dc=local,dc=com'
         search_filter = f'(&(objectclass=person)({search_on}={search_input}))'
-        admin_connect.search(search_base, search_filter, attributes=['memberOf', search_request])
+        admin_connect.search(app.config['LDAP_USERS_PATH'], search_filter, attributes=['memberOf', search_request])
 
-        is_admin = 'cn=admins,cn=groups,cn=accounts,dc=local,dc=com' in admin_connect.entries[0]['memberOf']
+        is_admin = f'cn=admins,{app.config["LDAP_USERS_PATH"]}' in admin_connect.entries[0]['memberOf']
 
         if on_key:
             unum = search_input
@@ -270,12 +277,10 @@ def login():
         password = escape_filter_chars(request.form.get('pswrd'))
 
         # Bind with the user's DN and password to authenticate
-        with Connection('giantest.local.com',
-                        user=f'uid={user},cn=users,cn=accounts,dc=local,dc=com',
+        with Connection(app.config['LDAP_HOST'],
+                        user=f'uid={user},{app.config["LDAP_USERS_PATH"]}',
                         password=password) as connection:
             if connection.bind():
-                print(f"User {user} authenticated successfully.")
-                # search for users member info
                 login_user(get_user_info("uid", user))
 
                 return redirect(url_for('build_home'))

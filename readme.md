@@ -1,34 +1,13 @@
-**Resource Lock Web API** is a program that will perform automatic distribution of resources and can be integrated into Lockheed Martin’s team’s CI/CD pipeline. In addition, a web application that will be used to view resource availability, and manually free and assign resources.
+**Resource Lock Web API** is a program that performs automatic distribution of resources and is integrated into Lockheed Martin’s team’s CI/CD pipeline. In addition, a web application that is used to view resource availability, and manually free and assign resources.
 
-# To run the current version
-- Clone the git repo
-- Navigate into the directory
-
-	`cd CG-RLWAPI`
+# To run
+- Set  up an [LDAP](#ldap-authentication) implementation
     
-- Make a virtual environment using `venv` like such:
-
-	`python -m venv virt`
-
-- Activate the virtual environment using activate located in `virt\Scripts` or `virt/bin` like such:
-
-	`virt\Scripts\activate`
-
-	`virt\Scripts\Activate.ps1`
-    
-    or
-
-	`source virt/bin/activate`
-
-- Install the required packages into the virtual environment:
-
-	`pip install -r requirements.txt`
-    
-  - Set up the configuration file
+ - Set up the configuration file
 
      `config.py`
    
-          should be a python file: config.py:
+       
           
           MYSQL_HOST = "sql_db_host"
           MYSQL_USER = "sql_db_user"
@@ -37,7 +16,7 @@
           # Integer
           MYSQL_PORT = {port_number}
         
-          # gen_keys.py
+          # gen_keys.py can generate these for you
           API_KEY = "single_api_key"
           SECRET_KEY = "secret_key"   
 
@@ -48,7 +27,6 @@
           # might need admin depending on ldap config
           LDAP_USER = "ldap_sign_in"
           LDAP_PASSWORD = "ldap_password"
-
 
 
 - Run the app
@@ -69,39 +47,22 @@ You should now be able to access the web app at http://localhost:5000 , defaulte
 
 - Execute the script
 	
-	`./client.sh lock network`
+	`./client.sh lock user_id`
+	`./client.sh unlocklock network_id`
+	`./client.sh checklock network_id`
 
-# LDAP Server
-- Connects to a LDAP server
+# LDAP Authentication
+- Authenticates web app user via LDAP
 
-- To test locally for free, launch an OS capable of hosting FreeIPA (such as [the lastest Fedora release](https://fedoraproject.org/workstation/download))
+- FreeIPA is an open source implementation of LDAP
 
-- Resolve download issues, set up the server or client using:
+- Launch an OS capable of hosting FreeIPA (such as [the lastest Fedora release](https://fedoraproject.org/workstation/download))
 
-`sudo dnf install free-ipa client`
+- Resolve download issues, for a simple with default installtion client:
 
-`sudo ipa-client install`
+`sudo dnf install freeipa-client`
 
-- For default installation, press enter for all except the question ending in "config from these settings?", type yes
+`sudo ipa-client-install
+`
 
-# Exit codes for client.sh
-
-    0 - Successful
-
-    1 - Problem with API Key
-    
-    2 - Problem connecting to API
-
-    3 - Bad parameters
-
-    4 - Not an action (checklock/lock/unlock)
-
-    5 - Couldn't find given input (network/user)
-
-    6 - Multiple records found matching given input (network/user)
-
-    7 - No free networks available
-
-    8 - Problem while locking: a free network was found but when went to lock, was not free
-    
-    9 - Problem while unlocking: network already unlocked
+- Press enter for all except the question ending in "config from these settings?", type yes
